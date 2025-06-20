@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFeedbackSubmission, FeedbackData } from '@/hooks/useFeedbackSubmission';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import ValidationErrors from '@/components/feedback/ValidationErrors';
+import DebugInfo from '@/components/feedback/DebugInfo';
+import RatingInput from '@/components/feedback/RatingInput';
+import ServiceTypeSelector from '@/components/feedback/ServiceTypeSelector';
+import AdministrativeDivisions from '@/components/feedback/AdministrativeDivisions';
 
 const FeedbackForm: React.FC = () => {
   const { t } = useLanguage();
@@ -30,19 +32,6 @@ const FeedbackForm: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [debugInfo, setDebugInfo] = useState<string>('');
 
-  const serviceTypes = [
-    'Healthcare',
-    'Education',
-    'Transportation',
-    'Water Supply',
-    'Electricity',
-    'Sanitation',
-    'Public Safety',
-    'Infrastructure',
-    'Government Services',
-    'Other'
-  ];
-
   const handleInputChange = (field: keyof FeedbackData, value: string | number) => {
     console.log(`🔄 Form field changed: ${field} =`, value);
     setFormData(prev => ({
@@ -54,10 +43,6 @@ const FeedbackForm: React.FC = () => {
     if (validationErrors.length > 0) {
       setValidationErrors([]);
     }
-  };
-
-  const handleRatingClick = (rating: number) => {
-    handleInputChange('rating', rating);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,47 +93,13 @@ const FeedbackForm: React.FC = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Debug Info */}
-          {debugInfo && (
-            <Alert>
-              <AlertDescription>
-                <strong>Debug Info:</strong> {debugInfo}
-              </AlertDescription>
-            </Alert>
-          )}
+          <DebugInfo debugInfo={debugInfo} />
+          <ValidationErrors errors={validationErrors} />
 
-          {/* Validation Errors */}
-          {validationErrors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <ul className="list-disc list-inside text-red-600 text-sm">
-                {validationErrors.map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Service Type */}
-          <div>
-            <Label htmlFor="service_type">
-              {t('service_category') || 'Service Category'} *
-            </Label>
-            <Select 
-              value={formData.service_type} 
-              onValueChange={(value) => handleInputChange('service_type', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t('select_service') || 'Select a service'} />
-              </SelectTrigger>
-              <SelectContent>
-                {serviceTypes.map((service) => (
-                  <SelectItem key={service} value={service}>
-                    {service}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ServiceTypeSelector
+            value={formData.service_type || ''}
+            onChange={(value) => handleInputChange('service_type', value)}
+          />
 
           {/* Title */}
           <div>
@@ -163,22 +114,10 @@ const FeedbackForm: React.FC = () => {
             />
           </div>
 
-          {/* Rating */}
-          <div>
-            <Label>{t('rating') || 'Rating'} *</Label>
-            <div className="flex space-x-1 mt-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => handleRatingClick(star)}
-                  className={`p-1 ${star <= (formData.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
-                >
-                  <Star className="w-6 h-6 fill-current" />
-                </button>
-              ))}
-            </div>
-          </div>
+          <RatingInput
+            rating={formData.rating || 0}
+            onRatingChange={(rating) => handleInputChange('rating', rating)}
+          />
 
           {/* Feedback Text */}
           <div>
@@ -221,42 +160,14 @@ const FeedbackForm: React.FC = () => {
             />
           </div>
 
-          {/* Administrative Divisions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="district">
-                {t('district') || 'District'}
-              </Label>
-              <Input
-                id="district"
-                value={formData.district || ''}
-                onChange={(e) => handleInputChange('district', e.target.value)}
-                placeholder={t('district') || 'District'}
-              />
-            </div>
-            <div>
-              <Label htmlFor="mandal">
-                {t('mandal') || 'Mandal'}
-              </Label>
-              <Input
-                id="mandal"
-                value={formData.mandal || ''}
-                onChange={(e) => handleInputChange('mandal', e.target.value)}
-                placeholder={t('mandal') || 'Mandal'}
-              />
-            </div>
-            <div>
-              <Label htmlFor="village">
-                {t('village') || 'Village'}
-              </Label>
-              <Input
-                id="village"
-                value={formData.village || ''}
-                onChange={(e) => handleInputChange('village', e.target.value)}
-                placeholder={t('village') || 'Village'}
-              />
-            </div>
-          </div>
+          <AdministrativeDivisions
+            district={formData.district || ''}
+            mandal={formData.mandal || ''}
+            village={formData.village || ''}
+            onDistrictChange={(value) => handleInputChange('district', value)}
+            onMandalChange={(value) => handleInputChange('mandal', value)}
+            onVillageChange={(value) => handleInputChange('village', value)}
+          />
 
           {/* Submit Button */}
           <Button 
