@@ -52,10 +52,50 @@ const DistrictSummary = () => {
         'Road connectivity improved to 8 villages'
       ],
       aiSummary: 'District performance is above average with strong education and healthcare systems. Agricultural support needs attention. Infrastructure development is progressing well.'
+    },
+    nizamabad: {
+      name: 'నిజామాబాద్',
+      totalFeedbacks: 156,
+      avgRating: 3.3,
+      topComplaints: [
+        { type: 'Agriculture Support', count: 45, avgRating: 2.9 },
+        { type: 'Water Supply', count: 42, avgRating: 3.0 },
+        { type: 'Roads', count: 35, avgRating: 3.2 },
+        { type: 'Healthcare', count: 22, avgRating: 3.8 },
+        { type: 'Education', count: 12, avgRating: 4.0 }
+      ],
+      criticalMandals: [
+        { name: 'నిజామాబాద్ రూరల్', avgRating: 2.7, issues: 'Water supply irregularities, road maintenance needed' }
+      ],
+      improvements: [
+        'New primary health centers established',
+        'Agricultural loan distribution improved',
+        'Rural road development ongoing'
+      ],
+      aiSummary: 'District shows steady progress with focus needed on agricultural support and water infrastructure. Healthcare services are improving with new facilities being established.'
     }
   };
 
   const currentDistrict = districtData[selectedDistrict as keyof typeof districtData];
+
+  // Safety check to prevent undefined access
+  if (!currentDistrict) {
+    return (
+      <div className="min-h-screen bg-light-blue-bg">
+        <OfficialNavigation />
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-government-blue mb-8 text-center">
+            District Summary Report 📋
+          </h1>
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-600">No data available for the selected district.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusColor = (rating: number) => {
     if (rating < 2.5) return 'destructive';
