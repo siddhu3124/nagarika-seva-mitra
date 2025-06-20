@@ -15,7 +15,7 @@ interface PhoneVerificationStepProps {
 const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerificationComplete }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { loading: phoneLoading, phoneNumber, canResend, sendOTP, verifyOTP, resetOTP } = usePhoneAuth();
+  const { loading, phoneNumber, canResend, sendOTP, verifyOTP, resendOTP, resetOTP } = usePhoneAuth();
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState('+91');
 
@@ -107,70 +107,80 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
   const handleVerifyOTP = useCallback(async (otp: string) => {
     const success = await verifyOTP(otp);
     if (success) {
-      toast({
-        title: "Success", 
-        description: "Phone verified successfully",
-      });
-      onVerificationComplete();
+      // Small delay to ensure auth state is updated
+      setTimeout(() => {
+        onVerificationComplete();
+      }, 500);
     }
     return success;
-  }, [verifyOTP, toast, onVerificationComplete]);
+  }, [verifyOTP, onVerificationComplete]);
 
   // Optimized resend handler
-  const handleResendOTP = useCallback(() => {
+  const handleResendOTP = useCallback(async () => {
+    return await resendOTP();
+  }, [resendOTP]);
+
+  // Handle back to phone number entry
+  const handleBackToPhone = useCallback(() => {
     resetOTP();
     setStep('phone');
-    toast({
-      title: "Resetting",
-      description: "Please enter your phone number again",
-    });
-  }, [resetOTP, toast]);
+  }, [resetOTP]);
 
-  if (step === 'phone') {
+  if (step === 'otp') {
     return (
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="phone">{t('phone_number')} *</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={currentPhoneNumber}
-            onChange={handlePhoneChange}
-            onKeyDown={handleKeyPress}
-            onClick={handleClick}
-            placeholder="+91XXXXXXXXXX"
-            maxLength={13}
-            autoComplete="tel"
-            className="font-mono"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Format: +91 followed by 10 digits starting with 6, 7, 8, or 9
-          </p>
-          {currentPhoneNumber.length > 3 && !isValidPhoneNumber && (
-            <p className="text-xs text-red-500 mt-1">
-              Invalid format. Number must start with 6, 7, 8, or 9 after +91
-            </p>
-          )}
-        </div>
-        <Button 
-          onClick={handleSendOTP}
-          disabled={phoneLoading || !isValidPhoneNumber}
-          className="w-full bg-government-blue hover:bg-government-blue/90"
+        <OTPInput
+          onVerify={handleVerifyOTP}
+          onResend={handleResendOTP}
+          loading={loading}
+          phoneNumber={phoneNumber}
+          canResend={canResend}
+        />
+        <Button
+          variant="ghost"
+          onClick={handleBackToPhone}
+          className="w-full text-sm"
+          disabled={loading}
         >
-          {phoneLoading ? 'Sending...' : 'Send OTP'}
+          Change Phone Number
         </Button>
       </div>
     );
   }
 
   return (
-    <OTPInput
-      onVerify={handleVerifyOTP}
-      onResend={handleResendOTP}
-      loading={phoneLoading}
-      phoneNumber={phoneNumber}
-      canResend={canResend}
-    />
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="phone">{t('phone_number')} *</Label>
+        <Input
+          id="phone"
+          type="tel"
+          value={currentPhoneNumber}
+          onChange={handlePhoneChange}
+          onKeyDown={handleKeyPress}
+          onClick={handleClick}
+          placeholder="+91XXXXXXXXXX"
+          maxLength={13}
+          autoComplete="tel"
+          className="font-mono"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Format: +91 followed by 10 digits starting with 6, 7, 8, or 9
+        </p>
+        {currentPhoneNumber.length > 3 && !isValidPhoneNumber && (
+          <p className="text-xs text-red-500 mt-1">
+            Invalid format. Number must start with 6, 7, 8, or 9 after +91
+          </p>
+        )}
+      </div>
+      <Button 
+        onClick={handleSendOTP}
+        disabled={loading || !isValidPhoneNumber}
+        className="w-full bg-government-blue hover:bg-government-blue/90"
+      >
+        {loading ? 'Sending...' : 'Send OTP'}
+      </Button>
+    </div>
   );
 };
 

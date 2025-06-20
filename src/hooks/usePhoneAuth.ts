@@ -68,6 +68,16 @@ export const usePhoneAuth = () => {
   };
 
   const verifyOTP = async (otp: string) => {
+    // Validate OTP format first
+    if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+      toast({
+        title: "Invalid OTP",
+        description: "Please enter a valid 6-digit OTP",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     setLoading(true);
     try {
       console.log('Attempting to verify OTP:', otp, 'for phone:', phoneNumber);
@@ -88,8 +98,13 @@ export const usePhoneAuth = () => {
         return false;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         console.log('OTP verified successfully, user:', data.user);
+        
+        // Get the current session to ensure we have the latest data
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log('Current session after verification:', sessionData);
+        
         toast({
           title: "Success",
           description: "Phone number verified successfully",
@@ -97,6 +112,11 @@ export const usePhoneAuth = () => {
         return true;
       }
 
+      toast({
+        title: "Verification Failed",
+        description: "Unable to verify OTP. Please try again.",
+        variant: "destructive"
+      });
       return false;
     } catch (error) {
       console.error('Verify OTP error:', error);
@@ -111,10 +131,24 @@ export const usePhoneAuth = () => {
     }
   };
 
+  const resendOTP = async () => {
+    if (!canResend) {
+      toast({
+        title: "Please Wait",
+        description: "You can resend OTP in a few seconds",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return await sendOTP(phoneNumber);
+  };
+
   const resetOTP = () => {
     setOtpSent(false);
     setPhoneNumber('');
     setCanResend(true);
+    setLoading(false);
   };
 
   return {
@@ -124,6 +158,7 @@ export const usePhoneAuth = () => {
     canResend,
     sendOTP,
     verifyOTP,
+    resendOTP,
     resetOTP
   };
 };
