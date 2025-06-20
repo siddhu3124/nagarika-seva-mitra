@@ -34,20 +34,35 @@ const CitizenProfileForm: React.FC = () => {
   const allMandals = getOptions('mandals');
   const allVillages = getOptions('villages');
 
-  // Improved cascading dropdown logic with better filtering
+  // Create mapping objects for better filtering
+  const districtMandalsMap = {
+    'hyderabad': ['secunderabad', 'kukatpally', 'lbnagar'],
+    'warangal': ['warangal_urban', 'warangal_rural'],
+    'nizamabad': ['nizamabad_urban', 'nizamabad_rural']
+  };
+
+  const mandalVillagesMap = {
+    'secunderabad': ['village1', 'village2'],
+    'kukatpally': ['village2', 'village3'],
+    'lbnagar': ['village1', 'village3'],
+    'warangal_urban': ['village1', 'village2'],
+    'warangal_rural': ['village2', 'village3'],
+    'nizamabad_urban': ['village1', 'village3'],
+    'nizamabad_rural': ['village1', 'village2']
+  };
+
+  // Improved cascading dropdown logic
   const filteredMandals = citizenForm.district 
     ? allMandals.filter(mandal => {
-        // More robust filtering - check if mandal code starts with district code
-        return mandal.value.toLowerCase().includes(citizenForm.district.toLowerCase()) ||
-               mandal.value.startsWith(citizenForm.district);
+        const allowedMandals = districtMandalsMap[citizenForm.district as keyof typeof districtMandalsMap] || [];
+        return allowedMandals.includes(mandal.value);
       })
     : [];
 
   const filteredVillages = citizenForm.mandal 
     ? allVillages.filter(village => {
-        // More robust filtering - check if village code starts with mandal code
-        return village.value.toLowerCase().includes(citizenForm.mandal.toLowerCase()) ||
-               village.value.startsWith(citizenForm.mandal);
+        const allowedVillages = mandalVillagesMap[citizenForm.mandal as keyof typeof mandalVillagesMap] || [];
+        return allowedVillages.includes(village.value);
       })
     : [];
 
@@ -100,7 +115,7 @@ const CitizenProfileForm: React.FC = () => {
     if (!citizenForm.mandal) {
       toast({
         title: "Error",
-        description: t('mandal') + " is required",
+        description: t('mandal') + " is required. Please select district first.",
         variant: "destructive"
       });
       return;
@@ -109,7 +124,7 @@ const CitizenProfileForm: React.FC = () => {
     if (!citizenForm.village) {
       toast({
         title: "Error",
-        description: t('village') + " is required",
+        description: t('village') + " is required. Please select mandal first.",
         variant: "destructive"
       });
       return;
@@ -261,14 +276,26 @@ const CitizenProfileForm: React.FC = () => {
             disabled={!citizenForm.district}
           >
             <SelectTrigger>
-              <SelectValue placeholder={t('select_mandal_placeholder')} />
+              <SelectValue 
+                placeholder={
+                  !citizenForm.district 
+                    ? "Please select district first" 
+                    : t('select_mandal_placeholder')
+                } 
+              />
             </SelectTrigger>
             <SelectContent>
-              {filteredMandals.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
+              {filteredMandals.length > 0 ? (
+                filteredMandals.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-2 text-sm text-gray-500">
+                  {!citizenForm.district ? "Select district first" : "No mandals available"}
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -280,14 +307,26 @@ const CitizenProfileForm: React.FC = () => {
             disabled={!citizenForm.mandal}
           >
             <SelectTrigger>
-              <SelectValue placeholder={t('select_village_placeholder')} />
+              <SelectValue 
+                placeholder={
+                  !citizenForm.mandal 
+                    ? "Please select mandal first" 
+                    : t('select_village_placeholder')
+                } 
+              />
             </SelectTrigger>
             <SelectContent>
-              {filteredVillages.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
+              {filteredVillages.length > 0 ? (
+                filteredVillages.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))
+              ) : (
+                <div className="px-2 py-2 text-sm text-gray-500">
+                  {!citizenForm.mandal ? "Select mandal first" : "No villages available"}
+                </div>
+              )}
             </SelectContent>
           </Select>
         </div>

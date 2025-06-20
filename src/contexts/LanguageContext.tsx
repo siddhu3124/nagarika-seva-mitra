@@ -205,7 +205,7 @@ const translations: Translations = {
   }
 };
 
-// Dropdown options translations
+// Enhanced dropdown options with proper district-mandal-village mapping
 const dropdownOptions = {
   gender: [
     { value: 'male', labelKey: 'male' },
@@ -286,6 +286,22 @@ const dropdownOptions = {
     { 
       value: 'lbnagar', 
       labels: { telugu: 'LB నగర్', english: 'LB Nagar', urdu: 'ایل بی نگر' }
+    },
+    { 
+      value: 'warangal_urban', 
+      labels: { telugu: 'వరంగల్ పట్టణ', english: 'Warangal Urban', urdu: 'ورنگل شہری' }
+    },
+    { 
+      value: 'warangal_rural', 
+      labels: { telugu: 'వరంగల్ గ్రామీణ', english: 'Warangal Rural', urdu: 'ورنگل دیہی' }
+    },
+    { 
+      value: 'nizamabad_urban', 
+      labels: { telugu: 'నిజామాబాద్ పట్టణ', english: 'Nizamabad Urban', urdu: 'نظام آباد شہری' }
+    },
+    { 
+      value: 'nizamabad_rural', 
+      labels: { telugu: 'నిజామాబాద్ గ్రామీణ', english: 'Nizamabad Rural', urdu: 'نظام آباد دیہی' }
     }
   ],
   villages: [
