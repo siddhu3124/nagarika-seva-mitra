@@ -35,23 +35,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session);
       setSession(session);
-      if (session) {
-        await fetchUserProfile(session.user.id);
+      
+      if (session && session.user) {
+        // Check if we have stored employee info (for officials)
+        const storedEmployeeInfo = localStorage.getItem('employeeInfo');
+        if (storedEmployeeInfo) {
+          const employeeData = JSON.parse(storedEmployeeInfo);
+          const userData: User = {
+            id: 'official_' + employeeData.id,
+            name: employeeData.name,
+            department: employeeData.department,
+            employee_id: employeeData.employee_id,
+            phone_number: employeeData.phone_number || session.user.phone || '',
+            district: employeeData.district,
+            mandal: employeeData.mandal,
+            village: employeeData.village,
+            role: 'official'
+          };
+          setUser(userData);
+        } else {
+          // Try to fetch user profile from database
+          await fetchUserProfile(session.user.id);
+        }
       } else {
         setUser(null);
+        localStorage.removeItem('employeeInfo');
+      }
+      setLoading(false);
+    });
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session);
+      if (session) {
+        // The onAuthStateChange will handle setting the user
+      } else {
         setLoading(false);
       }
     });
@@ -70,8 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Error fetching user profile:', error);
         setUser(null);
-      } else {
-        // Type cast the role to ensure it matches our interface
+      } else if (data) {
         const userProfile: User = {
           ...data,
           role: data.role as 'citizen' | 'official'
@@ -81,27 +102,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
       setUser(null);
-    } finally {
-      setLoading(false);
     }
   };
 
   const login = async (userData: User) => {
     try {
-      if (!session?.user) {
-        throw new Error('No authenticated session found');
+      console.log('Login attempt for user:', userData);
+      
+      // For officials, we don't need to store in database, just set the user
+      if (userData.role === 'official') {
+        setUser(userData);
+        return;
       }
 
-      // Insert or update user profile in database
-      const { error } = await supabase
-        .from('users')
-        .upsert({
-          auth_user_id: session.user.id,
-          ...userData
-        });
+      // For citizens, store in database if we have a session
+      if (session?.user) {
+        const { error } = await supabase
+          .from('users')
+          .upsert({
+            auth_user_id: session.user.id,
+            ...userData
+          });
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
       }
 
       setUser(userData);
@@ -116,6 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
+      localStorage.removeItem('employeeInfo');
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -128,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session,
       login,
       logout,
-      isAuthenticated: !!session && !!user,
+      isAuthenticated: !!user, // Changed to check user instead of session for officials
       loading
     }}>
       {children}
