@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -15,24 +15,40 @@ const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneN
   const [otp, setOtp] = useState('');
   const { t } = useLanguage();
 
-  const handleVerify = async () => {
-    if (otp.length === 6) {
+  // Memoize validation for better performance
+  const isValidOTP = useMemo(() => otp.length === 6, [otp]);
+
+  // Optimize OTP verification with useCallback
+  const handleVerify = useCallback(async () => {
+    if (isValidOTP) {
       await onVerify(otp);
     }
-  };
+  }, [otp, isValidOTP, onVerify]);
+
+  // Optimize OTP change handler
+  const handleOTPChange = useCallback((value: string) => {
+    setOtp(value);
+  }, []);
+
+  // Memoize masked phone number for display
+  const maskedPhoneNumber = useMemo(() => {
+    if (!phoneNumber) return '';
+    const cleanNumber = phoneNumber.replace(/^\+91/, '');
+    return `+91****${cleanNumber.slice(-4)}`;
+  }, [phoneNumber]);
 
   return (
     <div className="space-y-4">
       <div className="text-center">
         <p className="text-sm text-gray-600 mb-4">
-          {t('otp_sent_to')} {phoneNumber}
+          {t('otp_sent_to')} {maskedPhoneNumber}
         </p>
         
         <div className="flex justify-center">
           <InputOTP
             maxLength={6}
             value={otp}
-            onChange={(value) => setOtp(value)}
+            onChange={handleOTPChange}
           >
             <InputOTPGroup>
               <InputOTPSlot index={0} />
@@ -49,7 +65,7 @@ const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneN
       <div className="space-y-2">
         <Button 
           onClick={handleVerify}
-          disabled={loading || otp.length !== 6}
+          disabled={loading || !isValidOTP}
           className="w-full bg-government-blue hover:bg-government-blue/90"
         >
           {loading ? 'Verifying...' : t('verify_otp')}

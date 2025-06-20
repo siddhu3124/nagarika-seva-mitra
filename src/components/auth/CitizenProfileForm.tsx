@@ -29,25 +29,34 @@ const CitizenProfileForm: React.FC = () => {
     phone_number: ''
   });
 
-  // Cascading dropdown logic
+  // Get all options
   const allDistricts = getOptions('districts');
   const allMandals = getOptions('mandals');
   const allVillages = getOptions('villages');
 
+  // Improved cascading dropdown logic with better filtering
   const filteredMandals = citizenForm.district 
-    ? allMandals.filter(mandal => mandal.value.startsWith(citizenForm.district))
-    : allMandals;
+    ? allMandals.filter(mandal => {
+        // More robust filtering - check if mandal code starts with district code
+        return mandal.value.toLowerCase().includes(citizenForm.district.toLowerCase()) ||
+               mandal.value.startsWith(citizenForm.district);
+      })
+    : [];
 
   const filteredVillages = citizenForm.mandal 
-    ? allVillages.filter(village => village.value.startsWith(citizenForm.mandal))
-    : allVillages;
+    ? allVillages.filter(village => {
+        // More robust filtering - check if village code starts with mandal code
+        return village.value.toLowerCase().includes(citizenForm.mandal.toLowerCase()) ||
+               village.value.startsWith(citizenForm.mandal);
+      })
+    : [];
 
   const handleDistrictChange = (value: string) => {
     setCitizenForm({
       ...citizenForm,
       district: value,
-      mandal: '',
-      village: ''
+      mandal: '', // Reset mandal when district changes
+      village: '' // Reset village when district changes
     });
   };
 
@@ -55,7 +64,7 @@ const CitizenProfileForm: React.FC = () => {
     setCitizenForm({
       ...citizenForm,
       mandal: value,
-      village: ''
+      village: '' // Reset village when mandal changes
     });
   };
 
