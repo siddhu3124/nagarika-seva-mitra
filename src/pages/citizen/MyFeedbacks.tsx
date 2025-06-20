@@ -1,11 +1,12 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import CitizenNavigation from '@/components/CitizenNavigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import LoadingState from '@/components/feedback/LoadingState';
+import FeedbackList from '@/components/feedback/FeedbackList';
+import ErrorState from '@/components/feedback/ErrorState';
 
 interface Feedback {
   id: string;
@@ -98,49 +99,12 @@ const MyFeedbacks = () => {
     }
   };
 
-  const getServiceIcon = (serviceType: string) => {
-    const icons: { [key: string]: string } = {
-      'Healthcare': '🏥',
-      'Education': '🎓',
-      'Transportation': '🚌',
-      'Water Supply': '💧',
-      'Electricity': '⚡',
-      'Sanitation': '🧹',
-      'Public Safety': '🚔',
-      'Infrastructure': '🏗️',
-      'Government Services': '🏛️',
-      'Other': '📝'
-    };
-    return icons[serviceType] || '📝';
-  };
-
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className={i < rating ? 'text-yellow-400' : 'text-gray-300'}>
-        ⭐
-      </span>
-    ));
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-light-blue-bg">
         <CitizenNavigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-government-blue mx-auto"></div>
-            <p className="mt-2">Loading your feedbacks...</p>
-          </div>
+          <LoadingState />
         </div>
       </div>
     );
@@ -166,18 +130,7 @@ const MyFeedbacks = () => {
       <div className="min-h-screen bg-light-blue-bg">
         <CitizenNavigation />
         <div className="container mx-auto px-4 py-8">
-          <Alert className="max-w-2xl mx-auto" variant="destructive">
-            <AlertDescription>
-              {error}
-              <br />
-              <button 
-                onClick={fetchFeedbacks}
-                className="mt-2 text-sm underline hover:no-underline"
-              >
-                Try again
-              </button>
-            </AlertDescription>
-          </Alert>
+          <ErrorState error={error} onRetry={fetchFeedbacks} />
         </div>
       </div>
     );
@@ -192,59 +145,8 @@ const MyFeedbacks = () => {
           My Feedbacks 📋
         </h1>
         
-        <div className="max-w-4xl mx-auto space-y-4">
-          {feedbacks.map((feedback) => (
-            <Card key={feedback.id} className="animate-fade-in hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center text-lg">
-                    <span className="mr-2 text-2xl">{getServiceIcon(feedback.service_type)}</span>
-                    {feedback.title || 'Feedback'}
-                  </CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-gray-700">{feedback.feedback_text}</p>
-                  
-                  {feedback.location_details && (
-                    <div className="text-sm text-gray-600">
-                      📍 {feedback.location_details}
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-500">Rating:</span>
-                      <div className="flex">{renderStars(feedback.rating)}</div>
-                    </div>
-                    {(feedback.district || feedback.mandal || feedback.village) && (
-                      <div className="text-sm text-gray-500">
-                        {[feedback.district, feedback.mandal, feedback.village].filter(Boolean).join(' • ')}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Service: {feedback.service_type}</span>
-                    <span className="text-gray-400">
-                      Submitted: {formatDate(feedback.created_at)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          
-          {feedbacks.length === 0 && (
-            <Card className="text-center py-12">
-              <CardContent>
-                <div className="text-4xl mb-4">📝</div>
-                <h3 className="text-lg font-semibold mb-2">No feedbacks yet</h3>
-                <p className="text-gray-600">Submit your first feedback to see it here.</p>
-              </CardContent>
-            </Card>
-          )}
+        <div className="max-w-4xl mx-auto">
+          <FeedbackList feedbacks={feedbacks} />
         </div>
       </div>
     </div>
