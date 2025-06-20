@@ -15,8 +15,7 @@ interface PhoneVerificationStepProps {
 const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerificationComplete }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { loading, phoneNumber, canResend, sendOTP, verifyOTP, resendOTP, resetOTP } = usePhoneAuth();
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const { loading, otpSent, phoneNumber, canResend, sendOTP, verifyOTP, resendOTP, resetOTP } = usePhoneAuth();
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState('+91');
 
   // Memoize validation logic for better performance with strict Indian mobile format
@@ -97,36 +96,40 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
       return;
     }
 
+    console.log('Sending OTP to phone number:', currentPhoneNumber);
     const success = await sendOTP(currentPhoneNumber);
     if (success) {
-      setStep('otp');
+      console.log('OTP sent successfully, phone number stored:', phoneNumber);
     }
-  }, [currentPhoneNumber, isValidPhoneNumber, sendOTP, toast]);
+  }, [currentPhoneNumber, isValidPhoneNumber, sendOTP, toast, phoneNumber]);
 
   // Optimized OTP verification handler
   const handleVerifyOTP = useCallback(async (otp: string) => {
+    console.log('Verifying OTP:', otp, 'for phone:', phoneNumber);
     const success = await verifyOTP(otp);
     if (success) {
+      console.log('OTP verification successful, proceeding to profile completion');
       // Small delay to ensure auth state is updated
       setTimeout(() => {
         onVerificationComplete();
       }, 500);
     }
     return success;
-  }, [verifyOTP, onVerificationComplete]);
+  }, [verifyOTP, onVerificationComplete, phoneNumber]);
 
   // Optimized resend handler
   const handleResendOTP = useCallback(async () => {
+    console.log('Resending OTP to:', phoneNumber);
     return await resendOTP();
-  }, [resendOTP]);
+  }, [resendOTP, phoneNumber]);
 
   // Handle back to phone number entry
   const handleBackToPhone = useCallback(() => {
+    console.log('Resetting OTP flow, going back to phone entry');
     resetOTP();
-    setStep('phone');
   }, [resetOTP]);
 
-  if (step === 'otp') {
+  if (otpSent) {
     return (
       <div className="space-y-4">
         <OTPInput

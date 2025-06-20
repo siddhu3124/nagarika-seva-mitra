@@ -26,20 +26,26 @@ export const usePhoneAuth = () => {
         return false;
       }
 
-      const { error } = await supabase.auth.signInWithOtp({
+      // Use Supabase auth.signInWithOtp for Twilio integration
+      const { data, error } = await supabase.auth.signInWithOtp({
         phone: phone,
+        options: {
+          // Ensure we're using SMS channel
+          channel: 'sms'
+        }
       });
 
       if (error) {
         console.error('OTP send error:', error);
         toast({
           title: "Error",
-          description: error.message,
+          description: error.message || "Failed to send OTP",
           variant: "destructive"
         });
         return false;
       }
 
+      console.log('OTP send response:', data);
       setPhoneNumber(phone);
       setOtpSent(true);
       
@@ -82,6 +88,7 @@ export const usePhoneAuth = () => {
     try {
       console.log('Attempting to verify OTP:', otp, 'for phone:', phoneNumber);
       
+      // Use Supabase auth.verifyOtp with correct parameters for Twilio
       const { data, error } = await supabase.auth.verifyOtp({
         phone: phoneNumber,
         token: otp,
@@ -92,7 +99,7 @@ export const usePhoneAuth = () => {
         console.error('OTP verify error:', error);
         toast({
           title: "Invalid OTP",
-          description: "Invalid OTP. Please try again.",
+          description: error.message || "Invalid OTP. Please try again.",
           variant: "destructive"
         });
         return false;
@@ -100,6 +107,7 @@ export const usePhoneAuth = () => {
 
       if (data.user && data.session) {
         console.log('OTP verified successfully, user:', data.user);
+        console.log('Session created:', data.session);
         
         // Get the current session to ensure we have the latest data
         const { data: sessionData } = await supabase.auth.getSession();

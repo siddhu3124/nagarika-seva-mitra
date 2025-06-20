@@ -28,12 +28,16 @@ const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneN
       return;
     }
 
+    console.log('Starting OTP verification for:', otp);
     setIsVerifying(true);
     try {
       const success = await onVerify(otp);
       if (!success) {
         // Clear OTP on failure so user can try again
+        console.log('OTP verification failed, clearing input');
         setOtp('');
+      } else {
+        console.log('OTP verification successful');
       }
     } finally {
       setIsVerifying(false);
@@ -44,6 +48,7 @@ const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneN
   const handleOTPChange = useCallback((value: string) => {
     // Only allow digits and limit to 6 characters
     const cleanValue = value.replace(/\D/g, '').slice(0, 6);
+    console.log('OTP input changed:', cleanValue);
     setOtp(cleanValue);
   }, []);
 
@@ -53,6 +58,7 @@ const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneN
       return;
     }
     
+    console.log('Resending OTP...');
     await onResend();
     setOtp(''); // Clear current OTP when resending
   }, [canResend, loading, onResend]);
