@@ -1,12 +1,14 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
 import OfficialNavigation from '@/components/OfficialNavigation';
 
 const AnalyticsDashboard = () => {
+  const { t, getOptions } = useLanguage();
+  
   const [filters, setFilters] = useState({
     district: '',
     mandal: '',
@@ -75,46 +77,53 @@ const AnalyticsDashboard = () => {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <Select onValueChange={(value) => setFilters({...filters, district: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="District" />
+                  <SelectValue placeholder={t('district')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="hyderabad">హైదరాబాద్</SelectItem>
-                  <SelectItem value="warangal">వరంగల్</SelectItem>
-                  <SelectItem value="nizamabad">నిజామాబాద్</SelectItem>
+                  {getOptions('districts').map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
               <Select onValueChange={(value) => setFilters({...filters, mandal: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Mandal" />
+                  <SelectValue placeholder={t('mandal')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="secunderabad">సికింద్రాబాద్</SelectItem>
-                  <SelectItem value="kukatpally">కుకట్‌పల్లి</SelectItem>
-                  <SelectItem value="lbnagar">LB నగర్</SelectItem>
+                  {getOptions('mandals').map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
               <Select onValueChange={(value) => setFilters({...filters, village: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Village" />
+                  <SelectValue placeholder={t('village')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="village1">గ్రామం 1</SelectItem>
-                  <SelectItem value="village2">గ్రామం 2</SelectItem>
-                  <SelectItem value="village3">గ్రామం 3</SelectItem>
+                  {getOptions('villages').map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
               <Select onValueChange={(value) => setFilters({...filters, service: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Service" />
+                  <SelectValue placeholder={t('service_type')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="roads">Roads</SelectItem>
-                  <SelectItem value="water">Water</SelectItem>
-                  <SelectItem value="phc">PHC</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
+                  {getOptions('services').map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 

@@ -6,6 +6,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  getOptions: (category: string) => Array<{value: string, label: string}>;
 }
 
 interface Translations {
@@ -204,6 +205,119 @@ const translations: Translations = {
   }
 };
 
+// Dropdown options translations
+const dropdownOptions = {
+  gender: [
+    { value: 'male', labelKey: 'male' },
+    { value: 'female', labelKey: 'female' },
+    { value: 'other', labelKey: 'other' }
+  ],
+  departments: [
+    { 
+      value: 'health', 
+      labels: { telugu: 'ఆరోగ్య శాఖ', english: 'Health Department', urdu: 'صحت کا شعبہ' }
+    },
+    { 
+      value: 'roads', 
+      labels: { telugu: 'రోడ్స్ & బిల్డింగ్స్', english: 'Roads & Buildings', urdu: 'سڑکیں اور عمارات' }
+    },
+    { 
+      value: 'water', 
+      labels: { telugu: 'వాటర్ సప్లై', english: 'Water Supply', urdu: 'پانی کی فراہمی' }
+    },
+    { 
+      value: 'education', 
+      labels: { telugu: 'విద్యా శాఖ', english: 'Education Department', urdu: 'تعلیمی شعبہ' }
+    },
+    { 
+      value: 'agriculture', 
+      labels: { telugu: 'వ్యవసాయ శాఖ', english: 'Agriculture Department', urdu: 'زراعت کا شعبہ' }
+    }
+  ],
+  services: [
+    { 
+      value: 'water', 
+      labels: { telugu: 'నీటి సరఫరా', english: 'Water Supply', urdu: 'پانی کی فراہمی' }
+    },
+    { 
+      value: 'electricity', 
+      labels: { telugu: 'విద్యుత్', english: 'Electricity', urdu: 'بجلی' }
+    },
+    { 
+      value: 'roads', 
+      labels: { telugu: 'రోడ్లు', english: 'Roads', urdu: 'سڑکیں' }
+    },
+    { 
+      value: 'healthcare', 
+      labels: { telugu: 'ఆరోగ్య సేవలు', english: 'Healthcare', urdu: 'صحت کی دیکھ بھال' }
+    },
+    { 
+      value: 'sanitation', 
+      labels: { telugu: 'పరిశుభ్రత', english: 'Sanitation', urdu: 'صفائی' }
+    },
+    { 
+      value: 'education', 
+      labels: { telugu: 'విద్య', english: 'Education', urdu: 'تعلیم' }
+    }
+  ],
+  districts: [
+    { 
+      value: 'hyderabad', 
+      labels: { telugu: 'హైదరాబాద్', english: 'Hyderabad', urdu: 'حیدرآباد' }
+    },
+    { 
+      value: 'warangal', 
+      labels: { telugu: 'వరంగల్', english: 'Warangal', urdu: 'ورنگل' }
+    },
+    { 
+      value: 'nizamabad', 
+      labels: { telugu: 'నిజామాబాద్', english: 'Nizamabad', urdu: 'نظام آباد' }
+    }
+  ],
+  mandals: [
+    { 
+      value: 'secunderabad', 
+      labels: { telugu: 'సికింద్రాబాద్', english: 'Secunderabad', urdu: 'سکندرآباد' }
+    },
+    { 
+      value: 'kukatpally', 
+      labels: { telugu: 'కుకట్‌పల్లి', english: 'Kukatpally', urdu: 'کوکت پلی' }
+    },
+    { 
+      value: 'lbnagar', 
+      labels: { telugu: 'LB నగర్', english: 'LB Nagar', urdu: 'ایل بی نگر' }
+    }
+  ],
+  villages: [
+    { 
+      value: 'village1', 
+      labels: { telugu: 'గ్రామం 1', english: 'Village 1', urdu: 'گاؤں 1' }
+    },
+    { 
+      value: 'village2', 
+      labels: { telugu: 'గ్రామం 2', english: 'Village 2', urdu: 'گاؤں 2' }
+    },
+    { 
+      value: 'village3', 
+      labels: { telugu: 'గ్రామం 3', english: 'Village 3', urdu: 'گاؤں 3' }
+    }
+  ],
+  urgency: [
+    { 
+      value: 'low', 
+      labels: { telugu: 'తక్కువ', english: 'Low', urdu: 'کم' }
+    },
+    { 
+      value: 'medium', 
+      labels: { telugu: 'మధ్యమ', english: 'Medium', urdu: 'درمیانہ' }
+    },
+    { 
+      value: 'high', 
+      labels: { telugu: 'అధిక', english: 'High', urdu: 'زیادہ' }
+    }
+  ]
+};
+
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -213,8 +327,29 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return translations[key]?.[language] || key;
   };
 
+  const getOptions = (category: string): Array<{value: string, label: string}> => {
+    const options = dropdownOptions[category as keyof typeof dropdownOptions];
+    if (!options) return [];
+
+    return options.map(option => {
+      if ('labelKey' in option) {
+        // For simple options with labelKey
+        return {
+          value: option.value,
+          label: t(option.labelKey)
+        };
+      } else {
+        // For complex options with direct labels
+        return {
+          value: option.value,
+          label: option.labels[language]
+        };
+      }
+    });
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, getOptions }}>
       {children}
     </LanguageContext.Provider>
   );

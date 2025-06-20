@@ -1,47 +1,34 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import CitizenNavigation from '@/components/CitizenNavigation';
 
 const FeedbackForm = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, getOptions } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    district: user?.district || '',
-    mandal: user?.mandal || '',
-    village: user?.village || '',
+  const [feedback, setFeedback] = useState({
     service_type: '',
     rating: '',
     feedback_text: '',
-    photo: null as File | null
+    location_details: ''
   });
 
-  const [rating, setRating] = useState(0);
-
-  const serviceTypes = [
-    { value: 'ration', label: 'రేషన్ కార్డ్', icon: '🍚' },
-    { value: 'roads', label: 'రోడ్లు', icon: '🛣️' },
-    { value: 'water', label: 'నీటి సరఫరా', icon: '💧' },
-    { value: 'phc', label: 'ఆరోగ్య కేంద్రం', icon: '🏥' },
-    { value: 'education', label: 'విద్య', icon: '🎓' },
-    { value: 'electricity', label: 'విద్యుత్', icon: '⚡' },
-    { value: 'grievances', label: 'ఫిర్యాదులు', icon: '📢' }
-  ];
-
-  const handleSubmit = async () => {
-    if (!formData.service_type || !formData.feedback_text || rating === 0) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!feedback.service_type || !feedback.rating || !feedback.feedback_text) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -50,169 +37,117 @@ const FeedbackForm = () => {
       return;
     }
 
-    // Mock API call to save feedback
+    // Mock submission - in real app, this would submit to Supabase
     const feedbackData = {
-      ...formData,
-      rating,
-      user_id: user?.id,
+      ...feedback,
+      citizen_id: user?.id,
+      district: user?.district,
+      mandal: user?.mandal,
+      village: user?.village,
       created_at: new Date().toISOString(),
-      status: 'Open'
+      status: 'open'
     };
 
     console.log('Submitting feedback:', feedbackData);
 
     toast({
       title: "Success",
-      description: "Feedback submitted successfully!",
+      description: "Feedback submitted successfully! Thank you for your input.",
     });
 
+    // Reset form
+    setFeedback({
+      service_type: '',
+      rating: '',
+      feedback_text: '',
+      location_details: ''
+    });
+
+    // Navigate to thank you page
     navigate('/thank-you');
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({...formData, photo: file});
-    }
-  };
-
-  const StarRating = ({ rating, setRating }: { rating: number; setRating: (rating: number) => void }) => {
-    return (
-      <div className="flex space-x-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => setRating(star)}
-            className={`text-2xl ${star <= rating ? 'text-yellow-400' : 'text-gray-300'} hover:text-yellow-400 transition-colors`}
-          >
-            ⭐
-          </button>
-        ))}
-      </div>
-    );
-  };
+  const ratingOptions = [
+    { value: '1', label: '1 - Very Poor' },
+    { value: '2', label: '2 - Poor' },
+    { value: '3', label: '3 - Average' },
+    { value: '4', label: '4 - Good' },
+    { value: '5', label: '5 - Excellent' }
+  ];
 
   return (
     <div className="min-h-screen bg-light-blue-bg">
       <CitizenNavigation />
       
       <div className="container mx-auto px-4 py-8">
-        <Card className="max-w-2xl mx-auto animate-fade-in">
+        <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-government-blue text-center">
+            <CardTitle className="text-2xl text-government-blue text-center">
               {t('feedback_form')} 📝
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="district">{t('district')} *</Label>
-                <Select value={formData.district} onValueChange={(value) => setFormData({...formData, district: value})}>
+                <Label htmlFor="service-type">{t('service_type')} *</Label>
+                <Select onValueChange={(value) => setFeedback({...feedback, service_type: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('select_district_placeholder')} />
+                    <SelectValue placeholder={t('select_service_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hyderabad">హైదరాబాద్</SelectItem>
-                    <SelectItem value="warangal">వరంగల్</SelectItem>
-                    <SelectItem value="nizamabad">నిజామాబాద్</SelectItem>
+                    {getOptions('services').map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+
               <div>
-                <Label htmlFor="mandal">{t('mandal')} *</Label>
-                <Select value={formData.mandal} onValueChange={(value) => setFormData({...formData, mandal: value})}>
+                <Label htmlFor="rating">{t('rating')} *</Label>
+                <Select onValueChange={(value) => setFeedback({...feedback, rating: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('select_mandal_placeholder')} />
+                    <SelectValue placeholder="Select rating (1-5)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="secunderabad">సికింద్రాబాద్</SelectItem>
-                    <SelectItem value="kukatpally">కుకట్‌పల్లి</SelectItem>
-                    <SelectItem value="lbnagar">LB నగర్</SelectItem>
+                    {ratingOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+
               <div>
-                <Label htmlFor="village">{t('village')} *</Label>
-                <Select value={formData.village} onValueChange={(value) => setFormData({...formData, village: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('select_village_placeholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="village1">గ్రామం 1</SelectItem>
-                    <SelectItem value="village2">గ్రామం 2</SelectItem>
-                    <SelectItem value="village3">గ్రామం 3</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="location">{t('locality')} (Optional)</Label>
+                <Input
+                  id="location"
+                  value={feedback.location_details}
+                  onChange={(e) => setFeedback({...feedback, location_details: e.target.value})}
+                  placeholder={t('enter_locality_placeholder')}
+                />
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="service">{t('service_type')} *</Label>
-              <Select onValueChange={(value) => setFormData({...formData, service_type: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('select_service_placeholder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {serviceTypes.map((service) => (
-                    <SelectItem key={service.value} value={service.value}>
-                      <span className="flex items-center">
-                        <span className="mr-2">{service.icon}</span>
-                        {service.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>{t('rating')} * (మీ సంతృప్తి స్థాయి)</Label>
-              <div className="mt-2">
-                <StarRating rating={rating} setRating={setRating} />
-                <p className="text-sm text-gray-600 mt-1">
-                  {rating === 1 && "చాలా అసంతృప్తి"}
-                  {rating === 2 && "అసంతృప్తి"}
-                  {rating === 3 && "సాధారణం"}
-                  {rating === 4 && "సంతృప్తి"}
-                  {rating === 5 && "చాలా సంతృప్తి"}
-                </p>
+              <div>
+                <Label htmlFor="feedback-text">{t('feedback_text')} *</Label>
+                <Textarea
+                  id="feedback-text"
+                  value={feedback.feedback_text}
+                  onChange={(e) => setFeedback({...feedback, feedback_text: e.target.value})}
+                  placeholder={t('feedback_placeholder')}
+                  rows={5}
+                />
               </div>
-            </div>
 
-            <div>
-              <Label htmlFor="feedback">{t('feedback_text')} *</Label>
-              <Textarea
-                id="feedback"
-                value={formData.feedback_text}
-                onChange={(e) => setFormData({...formData, feedback_text: e.target.value})}
-                placeholder={t('feedback_placeholder')}
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="photo">Photo Upload (optional)</Label>
-              <Input
-                id="photo"
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="mt-1"
-              />
-              {formData.photo && (
-                <p className="text-sm text-green-600 mt-1">
-                  File selected: {formData.photo.name}
-                </p>
-              )}
-            </div>
-
-            <Button 
-              onClick={handleSubmit}
-              className="w-full bg-government-blue hover:bg-government-blue/90 text-lg py-6"
-            >
-              {t('submit')} ✉️
-            </Button>
+              <Button 
+                type="submit" 
+                className="w-full bg-government-blue hover:bg-government-blue/90"
+              >
+                {t('submit')}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

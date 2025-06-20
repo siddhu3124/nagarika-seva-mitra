@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +14,7 @@ import LanguageToggle from '@/components/LanguageToggle';
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { t } = useLanguage();
+  const { t, getOptions } = useLanguage();
   const { toast } = useToast();
 
   // Citizen form state
@@ -142,9 +141,11 @@ const LoginPage = () => {
                           <SelectValue placeholder={t('select_gender_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="male">{t('male')}</SelectItem>
-                          <SelectItem value="female">{t('female')}</SelectItem>
-                          <SelectItem value="other">{t('other')}</SelectItem>
+                          {getOptions('gender').map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -168,9 +169,11 @@ const LoginPage = () => {
                           <SelectValue placeholder={t('select_district_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="hyderabad">హైదరాబాద్</SelectItem>
-                          <SelectItem value="warangal">వరంగల్</SelectItem>
-                          <SelectItem value="nizamabad">నిజామాబాద్</SelectItem>
+                          {getOptions('districts').map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -181,9 +184,11 @@ const LoginPage = () => {
                           <SelectValue placeholder={t('select_mandal_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="secunderabad">సికింద్రాబాద్</SelectItem>
-                          <SelectItem value="kukatpally">కుకట్‌పల్లి</SelectItem>
-                          <SelectItem value="lbnagar">LB నగర్</SelectItem>
+                          {getOptions('mandals').map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -194,9 +199,11 @@ const LoginPage = () => {
                           <SelectValue placeholder={t('select_village_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="village1">గ్రామం 1</SelectItem>
-                          <SelectItem value="village2">గ్రామం 2</SelectItem>
-                          <SelectItem value="village3">గ్రామం 3</SelectItem>
+                          {getOptions('villages').map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -241,11 +248,11 @@ const LoginPage = () => {
                         <SelectValue placeholder={t('select_department_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="health">ఆరోగ్య శాఖ</SelectItem>
-                        <SelectItem value="roads">రోడ్స్ & బిల్డింగ్స్</SelectItem>
-                        <SelectItem value="water">వాటర్ సప్లై</SelectItem>
-                        <SelectItem value="education">విద్యా శాఖ</SelectItem>
-                        <SelectItem value="agriculture">వ్యవసాయ శాఖ</SelectItem>
+                        {getOptions('departments').map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
