@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -217,7 +218,7 @@ const AnalyticsDashboard = () => {
           <Card className="mt-8 border-red-200 bg-red-50">
             <CardHeader>
               <CardTitle className="text-red-700 flex items-center">
-                🚨 Critical Areas (Rating < 2.5)
+                🚨 Critical Areas (Rating &lt; 2.5)
               </CardTitle>
             </CardHeader>
             <CardContent>
