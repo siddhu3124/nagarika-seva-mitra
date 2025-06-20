@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,11 +52,58 @@ const FeedbackForm = () => {
     setLoading(true);
 
     try {
+      // First, check if user exists in users table, if not create them
+      let citizenId = user.id;
+      
+      // If user ID has citizen_ prefix, we need to handle it differently
+      if (user.id.startsWith('citizen_')) {
+        // Check if user exists in users table
+        const { data: existingUser, error: userCheckError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('phone_number', user.phone_number)
+          .eq('role', 'citizen')
+          .single();
+
+        if (userCheckError && userCheckError.code !== 'PGRST116') {
+          console.error('Error checking user:', userCheckError);
+          throw new Error('Failed to verify user');
+        }
+
+        if (existingUser) {
+          citizenId = existingUser.id;
+        } else {
+          // Create user in users table
+          const { data: newUser, error: createUserError } = await supabase
+            .from('users')
+            .insert({
+              name: user.name,
+              age: user.age,
+              gender: user.gender,
+              phone_number: user.phone_number,
+              locality: user.locality,
+              district: user.district,
+              mandal: user.mandal,
+              village: user.village,
+              role: 'citizen'
+            })
+            .select()
+            .single();
+
+          if (createUserError) {
+            console.error('Error creating user:', createUserError);
+            throw createUserError;
+          }
+
+          citizenId = newUser.id;
+        }
+      }
+
       // Insert feedback into database
       const { data: feedbackData, error: feedbackError } = await supabase
         .from('feedbacks')
         .insert({
-          citizen_id: user.id,
+          citizen_id: citizenId,
           service_type: feedback.service_type,
           title: feedback.title,
           description: feedback.description,
@@ -71,6 +117,7 @@ const FeedbackForm = () => {
         .single();
 
       if (feedbackError) {
+        console.error('Error submitting feedback:', feedbackError);
         throw feedbackError;
       }
 
@@ -78,7 +125,7 @@ const FeedbackForm = () => {
       if (attachments.length > 0) {
         for (const file of attachments) {
           const fileExt = file.name.split('.').pop();
-          const fileName = `${user.id}/${feedbackData.id}/${Date.now()}.${fileExt}`;
+          const fileName = `${citizenId}/${feedbackData.id}/${Date.now()}.${fileExt}`;
           
           const { error: uploadError } = await supabase.storage
             .from('feedback-attachments')
@@ -91,7 +138,7 @@ const FeedbackForm = () => {
             await supabase
               .from('file_uploads')
               .insert({
-                user_id: user.id,
+                user_id: citizenId,
                 feedback_id: feedbackData.id,
                 file_name: file.name,
                 file_size: file.size,
