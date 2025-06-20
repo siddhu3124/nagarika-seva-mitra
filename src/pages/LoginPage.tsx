@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,12 +36,11 @@ const LoginPage = () => {
     phone_number: ''
   });
 
-  // Official form state
-  const [officialForm, setOfficialForm] = useState({
+  // Employee form state (updated to match requirements)
+  const [employeeForm, setEmployeeForm] = useState({
     name: '',
     department: '',
-    employee_id: '',
-    phone_number: ''
+    employee_id: ''
   });
 
   const [userType, setUserType] = useState<'citizen' | 'official'>('citizen');
@@ -80,12 +78,13 @@ const LoginPage = () => {
     setStep('phone');
   };
 
-  const validateOfficialCredentials = async (employeeId: string, name: string) => {
+  const validateEmployeeCredentials = async (name: string, department: string, employeeId: string) => {
     const { data, error } = await supabase
-      .from('officials')
+      .from('employees')
       .select('*')
-      .eq('employee_id', employeeId)
       .eq('name', name)
+      .eq('department', department)
+      .eq('employee_id', employeeId)
       .single();
 
     if (error || !data) {
@@ -128,8 +127,8 @@ const LoginPage = () => {
     }
   };
 
-  const handleOfficialLogin = async () => {
-    if (!officialForm.name || !officialForm.employee_id || !officialForm.department) {
+  const handleEmployeeLogin = async () => {
+    if (!employeeForm.name || !employeeForm.department || !employeeForm.employee_id) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -138,24 +137,34 @@ const LoginPage = () => {
       return;
     }
 
-    // Validate official credentials
-    const officialData = await validateOfficialCredentials(officialForm.employee_id, officialForm.name);
-    if (!officialData) {
+    // Validate employee credentials against employees table
+    const employeeData = await validateEmployeeCredentials(
+      employeeForm.name, 
+      employeeForm.department, 
+      employeeForm.employee_id
+    );
+    
+    if (!employeeData) {
       toast({
         title: "Error",
-        description: "Invalid official credentials. Please contact your administrator.",
+        description: "Invalid employee credentials",
         variant: "destructive"
       });
       return;
     }
 
+    // Store employee info in localStorage for session management
+    localStorage.setItem('employeeInfo', JSON.stringify(employeeData));
+
     const userData = {
       id: 'official_' + Date.now(),
-      ...officialForm,
-      phone_number: phoneNumber,
-      district: officialData.district,
-      mandal: officialData.mandal,
-      village: officialData.village,
+      name: employeeData.name,
+      department: employeeData.department,
+      employee_id: employeeData.employee_id,
+      phone_number: employeeData.phone_number || phoneNumber,
+      district: employeeData.district,
+      mandal: employeeData.mandal,
+      village: employeeData.village,
       role: 'official' as const
     };
 
@@ -179,7 +188,7 @@ const LoginPage = () => {
     if (userType === 'citizen') {
       await handleCitizenLogin();
     } else {
-      await handleOfficialLogin();
+      await handleEmployeeLogin();
     }
   };
 
@@ -240,10 +249,11 @@ const LoginPage = () => {
                 <Tabs value={userType} onValueChange={(value) => setUserType(value as 'citizen' | 'official')}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="citizen">{t('citizen_login')}</TabsTrigger>
-                    <TabsTrigger value="official">{t('official_login')}</TabsTrigger>
+                    <TabsTrigger value="official">Employee Login</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="citizen" className="space-y-4">
+                    
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="citizen-name">{t('name')} *</Label>
@@ -346,39 +356,39 @@ const LoginPage = () => {
                   <TabsContent value="official" className="space-y-4">
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="official-name">{t('name')} *</Label>
+                        <Label htmlFor="employee-name">Name *</Label>
                         <Input
-                          id="official-name"
-                          value={officialForm.name}
-                          onChange={(e) => setOfficialForm({...officialForm, name: e.target.value})}
-                          placeholder={t('official_name_placeholder')}
+                          id="employee-name"
+                          value={employeeForm.name}
+                          onChange={(e) => setEmployeeForm({...employeeForm, name: e.target.value})}
+                          placeholder="Enter your full name"
                         />
                       </div>
 
                       <div>
-                        <Label htmlFor="department">{t('department')} *</Label>
-                        <Select onValueChange={(value) => setOfficialForm({...officialForm, department: value})}>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('select_department_placeholder')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getOptions('departments').map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <Label htmlFor="department">Department *</Label>
+                        <Input
+                          id="department"
+                          value={employeeForm.department}
+                          onChange={(e) => setEmployeeForm({...employeeForm, department: e.target.value})}
+                          placeholder="Enter your department"
+                        />
                       </div>
 
                       <div>
-                        <Label htmlFor="employee-id">{t('employee_id')} *</Label>
+                        <Label htmlFor="employee-id">Employee ID *</Label>
                         <Input
                           id="employee-id"
-                          value={officialForm.employee_id}
-                          onChange={(e) => setOfficialForm({...officialForm, employee_id: e.target.value})}
-                          placeholder={t('employee_id_placeholder')}
+                          value={employeeForm.employee_id}
+                          onChange={(e) => setEmployeeForm({...employeeForm, employee_id: e.target.value})}
+                          placeholder="Enter your employee ID"
                         />
+                      </div>
+
+                      <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-md">
+                        <p className="font-medium mb-1">Test Credentials:</p>
+                        <p>Name: Rajesh Kumar | Dept: Revenue | ID: REV001</p>
+                        <p>Name: Priya Sharma | Dept: Health | ID: HLT001</p>
                       </div>
                     </div>
                   </TabsContent>
@@ -389,7 +399,7 @@ const LoginPage = () => {
                   disabled={authLoading}
                   className="w-full bg-government-blue hover:bg-government-blue/90"
                 >
-                  {authLoading ? 'Creating Profile...' : 'Complete Profile'}
+                  {authLoading ? 'Processing...' : 'Complete Profile'}
                 </Button>
               </div>
             )}

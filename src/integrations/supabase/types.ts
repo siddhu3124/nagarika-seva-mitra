@@ -83,6 +83,42 @@ export type Database = {
           },
         ]
       }
+      employees: {
+        Row: {
+          created_at: string
+          department: string
+          district: string | null
+          employee_id: string
+          id: string
+          mandal: string | null
+          name: string
+          phone_number: string | null
+          village: string | null
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          district?: string | null
+          employee_id: string
+          id?: string
+          mandal?: string | null
+          name: string
+          phone_number?: string | null
+          village?: string | null
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          district?: string | null
+          employee_id?: string
+          id?: string
+          mandal?: string | null
+          name?: string
+          phone_number?: string | null
+          village?: string | null
+        }
+        Relationships: []
+      }
       feedbacks: {
         Row: {
           assigned_official_id: string | null
