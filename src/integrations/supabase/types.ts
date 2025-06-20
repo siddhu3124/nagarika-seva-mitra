@@ -58,8 +58,10 @@ export type Database = {
           feedback_text: string
           id: string
           location: string | null
+          location_details: string | null
           mandal: string | null
           rating: number
+          sentiment: string | null
           service_type: string | null
           title: string | null
           updated_at: string
@@ -72,8 +74,10 @@ export type Database = {
           feedback_text: string
           id?: string
           location?: string | null
+          location_details?: string | null
           mandal?: string | null
           rating: number
+          sentiment?: string | null
           service_type?: string | null
           title?: string | null
           updated_at?: string
@@ -86,15 +90,25 @@ export type Database = {
           feedback_text?: string
           id?: string
           location?: string | null
+          location_details?: string | null
           mandal?: string | null
           rating?: number
+          sentiment?: string | null
           service_type?: string | null
           title?: string | null
           updated_at?: string
           user_id?: string | null
           village?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "citizen_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       districts: {
         Row: {
