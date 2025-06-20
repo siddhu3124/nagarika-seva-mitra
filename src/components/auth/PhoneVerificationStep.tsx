@@ -99,9 +99,9 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
     console.log('Sending OTP to phone number:', currentPhoneNumber);
     const success = await sendOTP(currentPhoneNumber);
     if (success) {
-      console.log('OTP sent successfully, phone number stored:', phoneNumber);
+      console.log('OTP sent successfully');
     }
-  }, [currentPhoneNumber, isValidPhoneNumber, sendOTP, toast, phoneNumber]);
+  }, [currentPhoneNumber, isValidPhoneNumber, sendOTP, toast]);
 
   // Optimized OTP verification handler
   const handleVerifyOTP = useCallback(async (otp: string) => {
@@ -109,10 +109,10 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
     const success = await verifyOTP(otp);
     if (success) {
       console.log('OTP verification successful, proceeding to profile completion');
-      // Small delay to ensure auth state is updated
+      // Add delay to ensure auth state is fully updated
       setTimeout(() => {
         onVerificationComplete();
-      }, 500);
+      }, 1000);
     }
     return success;
   }, [verifyOTP, onVerificationComplete, phoneNumber]);

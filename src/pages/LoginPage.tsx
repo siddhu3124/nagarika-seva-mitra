@@ -1,14 +1,31 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import LanguageToggle from '@/components/LanguageToggle';
 import PhoneVerificationStep from '@/components/auth/PhoneVerificationStep';
 import ProfileCompletionStep from '@/components/auth/ProfileCompletionStep';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
-  const [step, setStep] = useState<'phone' | 'otp' | 'profile'>('phone');
+  const [step, setStep] = useState<'phone' | 'profile'>('phone');
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to appropriate dashboard
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      console.log('User authenticated, redirecting...', user);
+      if (user.role === 'citizen') {
+        navigate('/citizen');
+      } else if (user.role === 'official') {
+        navigate('/official');
+      }
+    }
+  }, [isAuthenticated, authLoading, user, navigate]);
 
   const handleVerificationComplete = () => {
+    console.log('Phone verification complete, moving to profile step');
     setStep('profile');
   };
 
@@ -16,14 +33,24 @@ const LoginPage = () => {
     switch (step) {
       case 'phone':
         return 'Phone Verification';
-      case 'otp':
-        return 'Enter OTP';
       case 'profile':
         return 'Complete Profile';
       default:
         return 'Phone Verification';
     }
   };
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-light-blue-bg to-government-blue flex items-center justify-center p-4">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-light-blue-bg to-government-blue flex items-center justify-center p-4">
@@ -44,7 +71,7 @@ const LoginPage = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {(step === 'phone' || step === 'otp') && (
+            {step === 'phone' && (
               <PhoneVerificationStep onVerificationComplete={handleVerificationComplete} />
             )}
 

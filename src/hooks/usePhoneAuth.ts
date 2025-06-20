@@ -30,7 +30,6 @@ export const usePhoneAuth = () => {
       const { data, error } = await supabase.auth.signInWithOtp({
         phone: phone,
         options: {
-          // Ensure we're using SMS channel
           channel: 'sms'
         }
       });
@@ -46,6 +45,8 @@ export const usePhoneAuth = () => {
       }
 
       console.log('OTP send response:', data);
+      
+      // Store phone number IMMEDIATELY after successful send
       setPhoneNumber(phone);
       setOtpSent(true);
       
@@ -84,6 +85,15 @@ export const usePhoneAuth = () => {
       return false;
     }
 
+    if (!phoneNumber) {
+      toast({
+        title: "Error",
+        description: "Phone number not found. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     setLoading(true);
     try {
       console.log('Attempting to verify OTP:', otp, 'for phone:', phoneNumber);
@@ -108,10 +118,6 @@ export const usePhoneAuth = () => {
       if (data.user && data.session) {
         console.log('OTP verified successfully, user:', data.user);
         console.log('Session created:', data.session);
-        
-        // Get the current session to ensure we have the latest data
-        const { data: sessionData } = await supabase.auth.getSession();
-        console.log('Current session after verification:', sessionData);
         
         toast({
           title: "Success",
@@ -144,6 +150,15 @@ export const usePhoneAuth = () => {
       toast({
         title: "Please Wait",
         description: "You can resend OTP in a few seconds",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!phoneNumber) {
+      toast({
+        title: "Error",
+        description: "Phone number not found. Please start over.",
         variant: "destructive"
       });
       return false;
