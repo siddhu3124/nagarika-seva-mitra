@@ -18,8 +18,9 @@ const OfficialNavigation = () => {
 
   const navItems = [
     { path: '/official/dashboard', label: 'Analytics Dashboard', icon: '📊' },
+    { path: '/official/feedback', label: 'View Feedback', icon: '📋' },
     { path: '/official/send-messages', label: 'Send Messages', icon: '📢' },
-    { path: '/official/district-summary', label: 'District Summary', icon: '📋' }
+    { path: '/official/district-summary', label: 'District Summary', icon: '📈' }
   ];
 
   return (
@@ -30,6 +31,7 @@ const OfficialNavigation = () => {
             <h1 className="text-xl font-bold text-government-blue">నాగరిక మిత్ర - Official</h1>
             <span className="text-sm text-gray-600">
               Welcome, {user?.name} ({user?.department})
+              {user?.district && <span className="ml-2 text-government-blue">• {user.district} District</span>}
             </span>
           </div>
           

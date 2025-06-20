@@ -478,6 +478,30 @@ export type Database = {
         }
         Relationships: []
       }
+      telangana_locations: {
+        Row: {
+          created_at: string | null
+          district: string
+          id: string
+          mandal: string
+          village: string
+        }
+        Insert: {
+          created_at?: string | null
+          district: string
+          id?: string
+          mandal: string
+          village: string
+        }
+        Update: {
+          created_at?: string | null
+          district?: string
+          id?: string
+          mandal?: string
+          village?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           age: number | null

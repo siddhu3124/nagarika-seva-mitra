@@ -45,14 +45,37 @@ const FeedbackForm: React.FC = () => {
     }
   };
 
+  const validateForm = (data: Partial<FeedbackData>): string[] => {
+    const errors: string[] = [];
+    
+    // Call the existing validation function
+    const baseErrors = validateFeedback(data);
+    errors.push(...baseErrors);
+    
+    // Add location validation
+    if (!data.district?.trim()) {
+      errors.push('District is required');
+    }
+    
+    if (!data.mandal?.trim()) {
+      errors.push('Mandal is required');
+    }
+    
+    if (!data.village?.trim()) {
+      errors.push('Village is required');
+    }
+    
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     console.log('📝 Form submission started with data:', formData);
     setDebugInfo('Starting form submission...');
     
-    // Validate form data
-    const errors = validateFeedback(formData);
+    // Validate form data (including location)
+    const errors = validateForm(formData);
     if (errors.length > 0) {
       setValidationErrors(errors);
       setDebugInfo(`Validation failed with ${errors.length} errors`);
@@ -92,7 +115,7 @@ const FeedbackForm: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <DebugInfo debugInfo={debugInfo} />
           <ValidationErrors errors={validationErrors} />
 
@@ -133,41 +156,34 @@ const FeedbackForm: React.FC = () => {
             />
           </div>
 
-          {/* Location */}
+          {/* Administrative Divisions - Now Required */}
           <div>
-            <Label htmlFor="location">
-              {t('location') || 'Location'}
+            <Label className="text-base font-semibold mb-3 block">
+              Location Information *
             </Label>
-            <Input
-              id="location"
-              value={formData.location || ''}
-              onChange={(e) => handleInputChange('location', e.target.value)}
-              placeholder={t('enter_location') || 'Enter location (optional)'}
+            <AdministrativeDivisions
+              district={formData.district || ''}
+              mandal={formData.mandal || ''}
+              village={formData.village || ''}
+              onDistrictChange={(value) => handleInputChange('district', value)}
+              onMandalChange={(value) => handleInputChange('mandal', value)}
+              onVillageChange={(value) => handleInputChange('village', value)}
             />
           </div>
 
           {/* Location Details */}
           <div>
             <Label htmlFor="location_details">
-              {t('location_details') || 'Location Details'}
+              {t('location_details') || 'Specific Location Details'}
             </Label>
             <Textarea
               id="location_details"
               value={formData.location_details || ''}
               onChange={(e) => handleInputChange('location_details', e.target.value)}
-              placeholder={t('additional_location_info') || 'Additional location information (optional)'}
+              placeholder={t('additional_location_info') || 'Additional location information (e.g., near school, bus stop, etc.)'}
               rows={2}
             />
           </div>
-
-          <AdministrativeDivisions
-            district={formData.district || ''}
-            mandal={formData.mandal || ''}
-            village={formData.village || ''}
-            onDistrictChange={(value) => handleInputChange('district', value)}
-            onMandalChange={(value) => handleInputChange('mandal', value)}
-            onVillageChange={(value) => handleInputChange('village', value)}
-          />
 
           {/* Submit Button */}
           <Button 
