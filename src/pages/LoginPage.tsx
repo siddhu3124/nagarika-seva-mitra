@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +45,21 @@ const LoginPage = () => {
   });
 
   const [userType, setUserType] = useState<'citizen' | 'official'>('citizen');
+
+  // Cascading dropdown logic
+  const allDistricts = getOptions('districts');
+  const allMandals = getOptions('mandals');
+  const allVillages = getOptions('villages');
+
+  // Filter mandals based on selected district
+  const filteredMandals = citizenForm.district 
+    ? allMandals.filter(mandal => mandal.value.startsWith(citizenForm.district))
+    : allMandals;
+
+  // Filter villages based on selected mandal
+  const filteredVillages = citizenForm.mandal 
+    ? allVillages.filter(village => village.value.startsWith(citizenForm.mandal))
+    : allVillages;
 
   const handleSendOTP = async () => {
     if (!currentPhoneNumber || currentPhoneNumber.length < 10) {
@@ -94,34 +110,123 @@ const LoginPage = () => {
   };
 
   const handleCitizenLogin = async () => {
-    if (!citizenForm.name || !citizenForm.age) {
+    // Validate required fields
+    if (!citizenForm.name.trim()) {
       toast({
         title: "Error",
-        description: "Please fill all required fields",
+        description: t('name') + " is required",
         variant: "destructive"
       });
       return;
     }
 
-    const userData = {
-      id: 'citizen_' + Date.now(),
-      ...citizenForm,
-      age: parseInt(citizenForm.age),
-      phone_number: phoneNumber,
-      role: 'citizen' as const
-    };
-
-    try {
-      await login(userData);
-      toast({
-        title: "Success",
-        description: "Profile created successfully",
-      });
-      navigate('/citizen/feedback');
-    } catch (error) {
+    if (!citizenForm.age || parseInt(citizenForm.age) < 1 || parseInt(citizenForm.age) > 120) {
       toast({
         title: "Error",
-        description: "Failed to create profile",
+        description: "Please enter a valid age",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!citizenForm.district) {
+      toast({
+        title: "Error",
+        description: t('district') + " is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!citizenForm.mandal) {
+      toast({
+        title: "Error",
+        description: t('mandal') + " is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!citizenForm.village) {
+      toast({
+        title: "Error",
+        description: t('village') + " is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Prepare user data for Supabase users table
+      const userData = {
+        name: citizenForm.name.trim(),
+        age: parseInt(citizenForm.age),
+        gender: citizenForm.gender || null,
+        locality: citizenForm.locality.trim() || null,
+        district: citizenForm.district,
+        mandal: citizenForm.mandal,
+        village: citizenForm.village,
+        phone_number: phoneNumber,
+        role: 'citizen',
+        auth_user_id: null, // Will be set if authenticated
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // If user is authenticated via phone, get their auth ID
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        userData.auth_user_id = session.user.id;
+      }
+
+      console.log('Submitting citizen data to users table:', userData);
+
+      // Insert into users table
+      const { data: insertedUser, error: insertError } = await supabase
+        .from('users')
+        .insert(userData)
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error inserting user:', insertError);
+        toast({
+          title: "Error",
+          description: insertError.message || "Failed to create profile",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Create user object for auth context
+      const authUserData = {
+        id: insertedUser.id,
+        name: insertedUser.name,
+        age: insertedUser.age,
+        gender: insertedUser.gender,
+        locality: insertedUser.locality,
+        district: insertedUser.district,
+        mandal: insertedUser.mandal,
+        village: insertedUser.village,
+        phone_number: insertedUser.phone_number,
+        role: 'citizen' as const
+      };
+
+      // Login user in auth context
+      await login(authUserData);
+
+      toast({
+        title: "Success",
+        description: "Profile completed successfully",
+      });
+
+      // Navigate to citizen dashboard
+      navigate('/citizen/feedback');
+    } catch (error) {
+      console.error('Error in citizen profile submission:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete profile. Please try again.",
         variant: "destructive"
       });
     }
@@ -192,6 +297,25 @@ const LoginPage = () => {
     }
   };
 
+  // Handle district change and reset dependent fields
+  const handleDistrictChange = (value: string) => {
+    setCitizenForm({
+      ...citizenForm,
+      district: value,
+      mandal: '', // Reset mandal when district changes
+      village: '' // Reset village when district changes
+    });
+  };
+
+  // Handle mandal change and reset village
+  const handleMandalChange = (value: string) => {
+    setCitizenForm({
+      ...citizenForm,
+      mandal: value,
+      village: '' // Reset village when mandal changes
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-light-blue-bg to-government-blue flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -222,7 +346,7 @@ const LoginPage = () => {
                     type="tel"
                     value={currentPhoneNumber}
                     onChange={(e) => setCurrentPhoneNumber(e.target.value)}
-                    placeholder="+91 9876543210"
+                    placeholder={t('enter_phone_placeholder')}
                   />
                 </div>
                 <Button 
@@ -253,7 +377,6 @@ const LoginPage = () => {
                   </TabsList>
 
                   <TabsContent value="citizen" className="space-y-4">
-                    
                     <div className="space-y-4">
                       <div>
                         <Label htmlFor="citizen-name">{t('name')} *</Label>
@@ -271,6 +394,8 @@ const LoginPage = () => {
                           <Input
                             id="age"
                             type="number"
+                            min="1"
+                            max="120"
                             value={citizenForm.age}
                             onChange={(e) => setCitizenForm({...citizenForm, age: e.target.value})}
                             placeholder={t('enter_age_placeholder')}
@@ -305,13 +430,13 @@ const LoginPage = () => {
 
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <Label htmlFor="district">{t('district')}</Label>
-                          <Select onValueChange={(value) => setCitizenForm({...citizenForm, district: value})}>
+                          <Label htmlFor="district">{t('district')} *</Label>
+                          <Select value={citizenForm.district} onValueChange={handleDistrictChange}>
                             <SelectTrigger>
                               <SelectValue placeholder={t('select_district_placeholder')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {getOptions('districts').map((option) => (
+                              {allDistricts.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
                                 </SelectItem>
@@ -320,13 +445,17 @@ const LoginPage = () => {
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="mandal">{t('mandal')}</Label>
-                          <Select onValueChange={(value) => setCitizenForm({...citizenForm, mandal: value})}>
+                          <Label htmlFor="mandal">{t('mandal')} *</Label>
+                          <Select 
+                            value={citizenForm.mandal} 
+                            onValueChange={handleMandalChange}
+                            disabled={!citizenForm.district}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder={t('select_mandal_placeholder')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {getOptions('mandals').map((option) => (
+                              {filteredMandals.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
                                 </SelectItem>
@@ -335,13 +464,17 @@ const LoginPage = () => {
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="village">{t('village')}</Label>
-                          <Select onValueChange={(value) => setCitizenForm({...citizenForm, village: value})}>
+                          <Label htmlFor="village">{t('village')} *</Label>
+                          <Select 
+                            value={citizenForm.village} 
+                            onValueChange={(value) => setCitizenForm({...citizenForm, village: value})}
+                            disabled={!citizenForm.mandal}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder={t('select_village_placeholder')} />
                             </SelectTrigger>
                             <SelectContent>
-                              {getOptions('villages').map((option) => (
+                              {filteredVillages.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
                                 </SelectItem>
