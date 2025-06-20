@@ -9,7 +9,140 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          district: string | null
+          id: string
+          mandal: string | null
+          sender_id: string | null
+          target_roles: string[]
+          title: string
+          village: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          mandal?: string | null
+          sender_id?: string | null
+          target_roles: string[]
+          title: string
+          village?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          mandal?: string | null
+          sender_id?: string | null
+          target_roles?: string[]
+          title?: string
+          village?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      officials: {
+        Row: {
+          created_at: string
+          department: string
+          district: string | null
+          employee_id: string
+          id: string
+          mandal: string | null
+          name: string
+          phone_number: string
+          village: string | null
+        }
+        Insert: {
+          created_at?: string
+          department: string
+          district?: string | null
+          employee_id: string
+          id?: string
+          mandal?: string | null
+          name: string
+          phone_number: string
+          village?: string | null
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          district?: string | null
+          employee_id?: string
+          id?: string
+          mandal?: string | null
+          name?: string
+          phone_number?: string
+          village?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          age: number | null
+          auth_user_id: string | null
+          created_at: string
+          department: string | null
+          district: string | null
+          employee_id: string | null
+          gender: string | null
+          id: string
+          locality: string | null
+          mandal: string | null
+          name: string
+          phone_number: string
+          role: string
+          updated_at: string
+          village: string | null
+        }
+        Insert: {
+          age?: number | null
+          auth_user_id?: string | null
+          created_at?: string
+          department?: string | null
+          district?: string | null
+          employee_id?: string | null
+          gender?: string | null
+          id?: string
+          locality?: string | null
+          mandal?: string | null
+          name: string
+          phone_number: string
+          role: string
+          updated_at?: string
+          village?: string | null
+        }
+        Update: {
+          age?: number | null
+          auth_user_id?: string | null
+          created_at?: string
+          department?: string | null
+          district?: string | null
+          employee_id?: string | null
+          gender?: string | null
+          id?: string
+          locality?: string | null
+          mandal?: string | null
+          name?: string
+          phone_number?: string
+          role?: string
+          updated_at?: string
+          village?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

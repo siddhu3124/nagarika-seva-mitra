@@ -5,127 +5,81 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import CitizenNavigation from '@/components/CitizenNavigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
   title: string;
-  message: string;
-  urgency: 'High' | 'Medium' | 'Low';
+  content: string;
   created_at: string;
-  created_by: string;
   district: string;
   mandal: string;
   village: string;
   target_roles: string[];
-  attachment_url?: string;
-  read_by?: string[];
+  sender_id: string;
 }
 
 const MessagesFromOfficials = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock data that simulates filtered messages based on user location
-  const mockMessages: Message[] = [
-    {
-      id: '1',
-      title: 'రోడ్ మరమ్మత్తు పనులు',
-      message: 'కుకట్‌పల్లి మండలంలో రోడ్ మరమ్మత్తు పనులు వచ్చే వారం ప్రారంభమవుతాయి. అసౌకర్యానికి క్షమాపణలు.',
-      urgency: 'Medium',
-      created_at: '2024-01-16T10:00:00Z',
-      created_by: 'రోడ్స్ & బిల్డింగ్స్ విభాగం',
-      district: 'హైదరాబాద్',
-      mandal: 'కుకట్‌పల్లి',
-      village: 'గ్రామం 1',
-      target_roles: ['citizen']
-    },
-    {
-      id: '2',
-      title: 'నీటి సరఫరా మెరుగుదల',
-      message: 'నీటి సరఫరా సమస్యలను పరిష్కరించడానికి కొత్త పంపింగ్ స్టేషన్ స్థాపించబడింది. రేపు నుండి సరిగ్గా నీరు వస్తుంది.',
-      urgency: 'High',
-      created_at: '2024-01-15T14:30:00Z',
-      created_by: 'వాటర్ సప్లై విభాగం',
-      district: 'హైదరాబాద్',
-      mandal: 'కుకట్‌పల్లి',
-      village: 'గ్రామం 1',
-      target_roles: ['citizen']
-    },
-    {
-      id: '3',
-      title: 'ఆరోగ్య శిబిరం',
-      message: 'ఈ శుక్రవారం ప్రాథమిక ఆరోగ్య కేంద్రంలో ఉచిత వైద్య శిబిరం నిర్వహించబడుతుంది. అందరూ వచ్చి లాభం పొందండి.',
-      urgency: 'Low',
-      created_at: '2024-01-14T09:15:00Z',
-      created_by: 'ఆరోగ్య విభాగం',
-      district: 'హైదరాబాద్',
-      mandal: 'కుకట్‌పల్లి',
-      village: 'గ్రామం 1',
-      target_roles: ['citizen']
-    },
-    {
-      id: '4',
-      title: 'Different Village Message',
-      message: 'This message is for a different village and should not appear.',
-      urgency: 'Medium',
-      created_at: '2024-01-13T11:00:00Z',
-      created_by: 'Test Department',
-      district: 'హైదరాబాద్',
-      mandal: 'కుకట్‌పల్లి',
-      village: 'గ్రామం 2',
-      target_roles: ['citizen']
-    }
-  ];
-
   useEffect(() => {
-    const fetchMessages = () => {
-      if (!user || !user.district || !user.mandal || !user.village) {
-        setMessages([]);
-        setLoading(false);
-        return;
-      }
-
-      // Filter messages based on user's location
-      const filteredMessages = mockMessages.filter(message => 
-        message.district === user.district &&
-        message.mandal === user.mandal &&
-        message.village === user.village &&
-        message.target_roles.includes('citizen')
-      );
-
-      // Sort by creation date (newest first)
-      filteredMessages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      setMessages(filteredMessages);
-      setLoading(false);
-    };
-
-    fetchMessages();
-
-    // Simulate real-time updates - in real app, this would be a websocket or polling
-    const interval = setInterval(() => {
+    if (!authLoading && user && user.district && user.mandal && user.village) {
       fetchMessages();
-    }, 30000); // Check for new messages every 30 seconds
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('messages-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages'
+          },
+          () => {
+            fetchMessages(); // Refetch when new messages are added
+          }
+        )
+        .subscribe();
 
-    return () => clearInterval(interval);
-  }, [user]);
-
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'High': return 'destructive';
-      case 'Medium': return 'default';
-      case 'Low': return 'secondary';
-      default: return 'default';
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  };
+  }, [user, authLoading]);
 
-  const getUrgencyIcon = (urgency: string) => {
-    switch (urgency) {
-      case 'High': return '🚨';
-      case 'Medium': return '⚠️';
-      case 'Low': return 'ℹ️';
-      default: return '📢';
+  const fetchMessages = async () => {
+    if (!user || !user.district || !user.mandal || !user.village) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('district', user.district)
+        .eq('mandal', user.mandal)
+        .eq('village', user.village)
+        .contains('target_roles', ['citizen'])
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        setMessages([]);
+      } else {
+        setMessages(data || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchMessages:', error);
+      setMessages([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,7 +93,7 @@ const MessagesFromOfficials = () => {
     });
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-light-blue-bg">
         <CitizenNavigation />
@@ -185,37 +139,19 @@ const MessagesFromOfficials = () => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center text-lg">
-                    <span className="mr-2">{getUrgencyIcon(message.urgency)}</span>
+                    <span className="mr-2">📢</span>
                     {message.title}
                   </CardTitle>
-                  <Badge variant={getUrgencyColor(message.urgency)}>
-                    {message.urgency}
+                  <Badge variant="default">
+                    Official
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <p className="text-gray-700 leading-relaxed">{message.message}</p>
-                  
-                  {message.attachment_url && (
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <a 
-                        href={message.attachment_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-government-blue hover:underline flex items-center"
-                      >
-                        📎 View Attachment
-                      </a>
-                    </div>
-                  )}
+                  <p className="text-gray-700 leading-relaxed">{message.content}</p>
                   
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-government-blue font-medium">
-                        {message.created_by}
-                      </span>
-                    </div>
                     <div className="text-gray-500">
                       📍 {message.district} • {message.mandal} • {message.village}
                     </div>
