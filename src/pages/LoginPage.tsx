@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,14 +33,16 @@ const LoginPage = () => {
     locality: '',
     district: '',
     mandal: '',
-    village: ''
+    village: '',
+    phone_number: ''
   });
 
   // Official form state
   const [officialForm, setOfficialForm] = useState({
     name: '',
     department: '',
-    employee_id: ''
+    employee_id: '',
+    phone_number: ''
   });
 
   const [userType, setUserType] = useState<'citizen' | 'official'>('citizen');
@@ -91,84 +94,92 @@ const LoginPage = () => {
     return data;
   };
 
+  const handleCitizenLogin = async () => {
+    if (!citizenForm.name || !citizenForm.age) {
+      toast({
+        title: "Error",
+        description: "Please fill all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const userData = {
+      id: 'citizen_' + Date.now(),
+      ...citizenForm,
+      age: parseInt(citizenForm.age),
+      phone_number: phoneNumber,
+      role: 'citizen' as const
+    };
+
+    try {
+      await login(userData);
+      toast({
+        title: "Success",
+        description: "Profile created successfully",
+      });
+      navigate('/citizen/feedback');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create profile",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleOfficialLogin = async () => {
+    if (!officialForm.name || !officialForm.employee_id || !officialForm.department) {
+      toast({
+        title: "Error",
+        description: "Please fill all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate official credentials
+    const officialData = await validateOfficialCredentials(officialForm.employee_id, officialForm.name);
+    if (!officialData) {
+      toast({
+        title: "Error",
+        description: "Invalid official credentials. Please contact your administrator.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const userData = {
+      id: 'official_' + Date.now(),
+      ...officialForm,
+      phone_number: phoneNumber,
+      district: officialData.district,
+      mandal: officialData.mandal,
+      village: officialData.village,
+      role: 'official' as const
+    };
+
+    try {
+      await login(userData);
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
+      navigate('/official/dashboard');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to complete login",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleCompleteProfile = async () => {
     if (userType === 'citizen') {
-      if (!citizenForm.name || !citizenForm.age) {
-        toast({
-          title: "Error",
-          description: "Please fill all required fields",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const userData = {
-        id: 'citizen_' + Date.now(),
-        ...citizenForm,
-        age: parseInt(citizenForm.age),
-        phone_number: phoneNumber,
-        role: 'citizen' as const
-      };
-
-      try {
-        await login(userData);
-        toast({
-          title: "Success",
-          description: "Profile created successfully",
-        });
-        navigate('/citizen/feedback');
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to create profile",
-          variant: "destructive"
-        });
-      }
+      await handleCitizenLogin();
     } else {
-      if (!officialForm.name || !officialForm.employee_id || !officialForm.department) {
-        toast({
-          title: "Error",
-          description: "Please fill all required fields",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Validate official credentials
-      const officialData = await validateOfficialCredentials(officialForm.employee_id, officialForm.name);
-      if (!officialData) {
-        toast({
-          title: "Error",
-          description: "Invalid official credentials. Please contact your administrator.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const userData = {
-        id: 'official_' + Date.now(),
-        ...officialForm,
-        phone_number: phoneNumber,
-        district: officialData.district,
-        mandal: officialData.mandal,
-        village: officialData.village,
-        role: 'official' as const
-      };
-
-      try {
-        await login(userData);
-        toast({
-          title: "Success",
-          description: "Logged in successfully",
-        });
-        navigate('/official/dashboard');
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to complete login",
-          variant: "destructive"
-        });
-      }
+      await handleOfficialLogin();
     }
   };
 
@@ -329,24 +340,6 @@ const LoginPage = () => {
                           </Select>
                         </div>
                       </div>
-
-                      <div>
-                        <Label htmlFor="phone">{t('phone_number')} *</Label>
-                        <Input
-                          id="phone"
-                          type="tel"
-                          value={citizenForm.phone_number}
-                          onChange={(e) => setCitizenForm({...citizenForm, phone_number: e.target.value})}
-                          placeholder={t('enter_phone_placeholder')}
-                        />
-                      </div>
-
-                      <Button 
-                        onClick={handleCitizenLogin}
-                        className="w-full bg-government-blue hover:bg-government-blue/90"
-                      >
-                        {t('login')}
-                      </Button>
                     </div>
                   </TabsContent>
 
@@ -387,24 +380,6 @@ const LoginPage = () => {
                           placeholder={t('employee_id_placeholder')}
                         />
                       </div>
-
-                      <div>
-                        <Label htmlFor="official-phone">{t('phone_number')} *</Label>
-                        <Input
-                          id="official-phone"
-                          type="tel"
-                          value={officialForm.phone_number}
-                          onChange={(e) => setOfficialForm({...officialForm, phone_number: e.target.value})}
-                          placeholder={t('enter_phone_placeholder')}
-                        />
-                      </div>
-
-                      <Button 
-                        onClick={handleOfficialLogin}
-                        className="w-full bg-government-blue hover:bg-government-blue/90"
-                      >
-                        {t('login')}
-                      </Button>
                     </div>
                   </TabsContent>
                 </Tabs>
