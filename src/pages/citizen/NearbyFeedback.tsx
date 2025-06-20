@@ -105,14 +105,14 @@ const NearbyFeedback = () => {
     return icons[serviceType] || '📝';
   };
 
-  const getStatusColor = (status: string) => {
-    const colors = {
+  const getStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
+    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
       'open': 'destructive',
       'in_progress': 'default',
       'resolved': 'default',
       'closed': 'secondary'
     };
-    return colors[status as keyof typeof colors] || 'default';
+    return colors[status] || 'default';
   };
 
   const renderStars = (rating: number) => {

@@ -64,8 +64,15 @@ const NotificationCenter = () => {
       if (error) {
         console.error('Error fetching notifications:', error);
       } else {
-        setNotifications(data || []);
-        setUnreadCount(data?.filter(n => !n.read_at).length || 0);
+        // Cast the database data to match our interface
+        const typedNotifications: Notification[] = (data || []).map(notification => ({
+          ...notification,
+          type: ['info', 'warning', 'success', 'error'].includes(notification.type) 
+            ? notification.type as 'info' | 'warning' | 'success' | 'error'
+            : 'info'
+        }));
+        setNotifications(typedNotifications);
+        setUnreadCount(typedNotifications.filter(n => !n.read_at).length);
       }
     } catch (error) {
       console.error('Error in fetchNotifications:', error);
@@ -101,14 +108,14 @@ const NotificationCenter = () => {
     }
   };
 
-  const getTypeColor = (type: string) => {
-    const colors = {
+  const getTypeColor = (type: string): "default" | "destructive" | "outline" | "secondary" => {
+    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
       'info': 'default',
       'warning': 'destructive',
       'success': 'default',
       'error': 'destructive'
     };
-    return colors[type as keyof typeof colors] || 'default';
+    return colors[type] || 'default';
   };
 
   const formatDate = (dateString: string) => {

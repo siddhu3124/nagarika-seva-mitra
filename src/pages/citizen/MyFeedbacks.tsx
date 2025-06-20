@@ -98,24 +98,24 @@ const MyFeedbacks = () => {
     return icons[serviceType] || '📝';
   };
 
-  const getStatusColor = (status: string) => {
-    const colors = {
+  const getStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
+    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
       'open': 'destructive',
       'in_progress': 'default',
       'resolved': 'default',
       'closed': 'secondary'
     };
-    return colors[status as keyof typeof colors] || 'default';
+    return colors[status] || 'default';
   };
 
-  const getPriorityColor = (priority: string) => {
-    const colors = {
+  const getPriorityColor = (priority: string): "default" | "destructive" | "outline" | "secondary" => {
+    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
       'low': 'secondary',
       'medium': 'default',
       'high': 'destructive',
       'urgent': 'destructive'
     };
-    return colors[priority as keyof typeof colors] || 'default';
+    return colors[priority] || 'default';
   };
 
   const renderStars = (rating: number) => {
