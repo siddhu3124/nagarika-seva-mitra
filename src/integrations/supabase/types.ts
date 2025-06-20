@@ -9,6 +9,235 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id: string
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
+      districts: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          state_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          state_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          state_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "districts_state_id_fkey"
+            columns: ["state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedbacks: {
+        Row: {
+          assigned_official_id: string | null
+          citizen_id: string | null
+          created_at: string
+          description: string
+          district: string | null
+          id: string
+          location_details: string | null
+          mandal: string | null
+          priority: string | null
+          rating: number | null
+          resolved_at: string | null
+          service_type: string
+          status: string
+          title: string
+          updated_at: string
+          village: string | null
+        }
+        Insert: {
+          assigned_official_id?: string | null
+          citizen_id?: string | null
+          created_at?: string
+          description: string
+          district?: string | null
+          id?: string
+          location_details?: string | null
+          mandal?: string | null
+          priority?: string | null
+          rating?: number | null
+          resolved_at?: string | null
+          service_type: string
+          status?: string
+          title: string
+          updated_at?: string
+          village?: string | null
+        }
+        Update: {
+          assigned_official_id?: string | null
+          citizen_id?: string | null
+          created_at?: string
+          description?: string
+          district?: string | null
+          id?: string
+          location_details?: string | null
+          mandal?: string | null
+          priority?: string | null
+          rating?: number | null
+          resolved_at?: string | null
+          service_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          village?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedbacks_assigned_official_id_fkey"
+            columns: ["assigned_official_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedbacks_citizen_id_fkey"
+            columns: ["citizen_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_uploads: {
+        Row: {
+          bucket_name: string
+          created_at: string
+          feedback_id: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          storage_path: string
+          user_id: string | null
+        }
+        Insert: {
+          bucket_name?: string
+          created_at?: string
+          feedback_id?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          storage_path: string
+          user_id?: string | null
+        }
+        Update: {
+          bucket_name?: string
+          created_at?: string
+          feedback_id?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          storage_path?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_uploads_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedbacks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "file_uploads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mandals: {
+        Row: {
+          code: string
+          created_at: string
+          district_id: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mandals_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -53,6 +282,50 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          category: string | null
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read_at?: string | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       officials: {
         Row: {
           created_at: string
@@ -86,6 +359,27 @@ export type Database = {
           name?: string
           phone_number?: string
           village?: string | null
+        }
+        Relationships: []
+      }
+      states: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
@@ -142,6 +436,41 @@ export type Database = {
           village?: string | null
         }
         Relationships: []
+      }
+      villages: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          mandal_id: string | null
+          name: string
+          population: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          mandal_id?: string | null
+          name: string
+          population?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          mandal_id?: string | null
+          name?: string
+          population?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "villages_mandal_id_fkey"
+            columns: ["mandal_id"]
+            isOneToOne: false
+            referencedRelation: "mandals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

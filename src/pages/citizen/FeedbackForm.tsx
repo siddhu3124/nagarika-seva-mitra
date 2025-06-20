@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import CitizenNavigation from '@/components/CitizenNavigation';
 
 const FeedbackForm = () => {
@@ -20,15 +21,18 @@ const FeedbackForm = () => {
 
   const [feedback, setFeedback] = useState({
     service_type: '',
+    title: '',
+    description: '',
     rating: '',
-    feedback_text: '',
     location_details: ''
   });
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!feedback.service_type || !feedback.rating || !feedback.feedback_text) {
+    if (!feedback.service_type || !feedback.title || !feedback.description || !feedback.rating) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -37,34 +41,103 @@ const FeedbackForm = () => {
       return;
     }
 
-    // Mock submission - in real app, this would submit to Supabase
-    const feedbackData = {
-      ...feedback,
-      citizen_id: user?.id,
-      district: user?.district,
-      mandal: user?.mandal,
-      village: user?.village,
-      created_at: new Date().toISOString(),
-      status: 'open'
-    };
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to submit feedback",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    console.log('Submitting feedback:', feedbackData);
+    setLoading(true);
 
-    toast({
-      title: "Success",
-      description: "Feedback submitted successfully! Thank you for your input.",
-    });
+    try {
+      // Insert feedback into database
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('feedbacks')
+        .insert({
+          citizen_id: user.id,
+          service_type: feedback.service_type,
+          title: feedback.title,
+          description: feedback.description,
+          rating: parseInt(feedback.rating),
+          location_details: feedback.location_details,
+          district: user.district,
+          mandal: user.mandal,
+          village: user.village
+        })
+        .select()
+        .single();
 
-    // Reset form
-    setFeedback({
-      service_type: '',
-      rating: '',
-      feedback_text: '',
-      location_details: ''
-    });
+      if (feedbackError) {
+        throw feedbackError;
+      }
 
-    // Navigate to thank you page
-    navigate('/thank-you');
+      // Upload attachments if any
+      if (attachments.length > 0) {
+        for (const file of attachments) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${user.id}/${feedbackData.id}/${Date.now()}.${fileExt}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('feedback-attachments')
+            .upload(fileName, file);
+
+          if (uploadError) {
+            console.error('Error uploading file:', uploadError);
+          } else {
+            // Save file metadata
+            await supabase
+              .from('file_uploads')
+              .insert({
+                user_id: user.id,
+                feedback_id: feedbackData.id,
+                file_name: file.name,
+                file_size: file.size,
+                file_type: file.type,
+                storage_path: fileName
+              });
+          }
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "Feedback submitted successfully! Thank you for your input.",
+      });
+
+      // Reset form
+      setFeedback({
+        service_type: '',
+        title: '',
+        description: '',
+        rating: '',
+        location_details: ''
+      });
+      setAttachments([]);
+
+      navigate('/thank-you');
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
   };
 
   const ratingOptions = [
@@ -105,6 +178,16 @@ const FeedbackForm = () => {
               </div>
 
               <div>
+                <Label htmlFor="title">Feedback Title *</Label>
+                <Input
+                  id="title"
+                  value={feedback.title}
+                  onChange={(e) => setFeedback({...feedback, title: e.target.value})}
+                  placeholder="Brief description of the issue"
+                />
+              </div>
+
+              <div>
                 <Label htmlFor="rating">{t('rating')} *</Label>
                 <Select onValueChange={(value) => setFeedback({...feedback, rating: value})}>
                   <SelectTrigger>
@@ -121,31 +204,61 @@ const FeedbackForm = () => {
               </div>
 
               <div>
-                <Label htmlFor="location">{t('locality')} (Optional)</Label>
+                <Label htmlFor="location">Specific Location Details (Optional)</Label>
                 <Input
                   id="location"
                   value={feedback.location_details}
                   onChange={(e) => setFeedback({...feedback, location_details: e.target.value})}
-                  placeholder={t('enter_locality_placeholder')}
+                  placeholder="Street address, landmark, etc."
                 />
               </div>
 
               <div>
-                <Label htmlFor="feedback-text">{t('feedback_text')} *</Label>
+                <Label htmlFor="description">Detailed Description *</Label>
                 <Textarea
-                  id="feedback-text"
-                  value={feedback.feedback_text}
-                  onChange={(e) => setFeedback({...feedback, feedback_text: e.target.value})}
+                  id="description"
+                  value={feedback.description}
+                  onChange={(e) => setFeedback({...feedback, description: e.target.value})}
                   placeholder={t('feedback_placeholder')}
                   rows={5}
                 />
               </div>
 
+              <div>
+                <Label htmlFor="attachments">Attach Photos/Documents (Optional)</Label>
+                <Input
+                  id="attachments"
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  className="cursor-pointer"
+                />
+                {attachments.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {attachments.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded">
+                        <span className="text-sm">{file.name}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Button 
                 type="submit" 
+                disabled={loading}
                 className="w-full bg-government-blue hover:bg-government-blue/90"
               >
-                {t('submit')}
+                {loading ? 'Submitting...' : t('submit')}
               </Button>
             </form>
           </CardContent>

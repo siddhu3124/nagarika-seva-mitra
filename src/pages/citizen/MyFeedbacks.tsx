@@ -1,32 +1,89 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import CitizenNavigation from '@/components/CitizenNavigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Feedback {
+  id: string;
+  service_type: string;
+  title: string;
+  description: string;
+  rating: number;
+  status: string;
+  priority: string;
+  location_details: string | null;
+  district: string | null;
+  mandal: string | null;
+  village: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const MyFeedbacks = () => {
-  // Mock data - in real app, this would come from Supabase
-  const feedbacks = [
-    {
-      id: 1,
-      service_type: 'roads',
-      feedback_text: 'రోడ్‌లో పెద్ద గుంతలు ఉన్నాయి. దయచేసి మరమ్మత్తు చేయండి.',
-      rating: 2,
-      status: 'Open',
-      created_at: '2024-01-15',
-      district: 'హైదరాబాద్',
-      mandal: 'కుకట్‌పల్లి'
-    },
-    {
-      id: 2,
-      service_type: 'water',
-      feedback_text: 'నీటి సరఫరా సరిగా లేదు. రోజు 2 గంటలు మాత్రమే వస్తున్నది.',
-      rating: 3,
-      status: 'Resolved',
-      created_at: '2024-01-10',
-      district: 'హైదరాబాద్',
-      mandal: 'కుకట్‌పల్లి'
+  const { user, loading: authLoading } = useAuth();
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchFeedbacks();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel('user-feedbacks')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'feedbacks',
+            filter: `citizen_id=eq.${user.id}`
+          },
+          () => {
+            fetchFeedbacks(); // Refetch when feedbacks change
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  ];
+  }, [user, authLoading]);
+
+  const fetchFeedbacks = async () => {
+    if (!user) {
+      setFeedbacks([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('feedbacks')
+        .select('*')
+        .eq('citizen_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching feedbacks:', error);
+        setFeedbacks([]);
+      } else {
+        setFeedbacks(data || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchFeedbacks:', error);
+      setFeedbacks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getServiceIcon = (serviceType: string) => {
     const icons: { [key: string]: string } = {
@@ -42,7 +99,23 @@ const MyFeedbacks = () => {
   };
 
   const getStatusColor = (status: string) => {
-    return status === 'Open' ? 'destructive' : 'default';
+    const colors = {
+      'open': 'destructive',
+      'in_progress': 'default',
+      'resolved': 'default',
+      'closed': 'secondary'
+    };
+    return colors[status as keyof typeof colors] || 'default';
+  };
+
+  const getPriorityColor = (priority: string) => {
+    const colors = {
+      'low': 'secondary',
+      'medium': 'default',
+      'high': 'destructive',
+      'urgent': 'destructive'
+    };
+    return colors[priority as keyof typeof colors] || 'default';
   };
 
   const renderStars = (rating: number) => {
@@ -52,6 +125,42 @@ const MyFeedbacks = () => {
       </span>
     ));
   };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen bg-light-blue-bg">
+        <CitizenNavigation />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">Loading your feedbacks...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-light-blue-bg">
+        <CitizenNavigation />
+        <div className="container mx-auto px-4 py-8">
+          <Alert className="max-w-2xl mx-auto">
+            <AlertDescription>
+              Please log in to view your feedbacks.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-light-blue-bg">
@@ -64,21 +173,32 @@ const MyFeedbacks = () => {
         
         <div className="max-w-4xl mx-auto space-y-4">
           {feedbacks.map((feedback) => (
-            <Card key={feedback.id} className="animate-fade-in">
+            <Card key={feedback.id} className="animate-fade-in hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center text-lg">
                     <span className="mr-2 text-2xl">{getServiceIcon(feedback.service_type)}</span>
-                    {feedback.service_type.charAt(0).toUpperCase() + feedback.service_type.slice(1)}
+                    {feedback.title}
                   </CardTitle>
-                  <Badge variant={getStatusColor(feedback.status)}>
-                    {feedback.status}
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge variant={getStatusColor(feedback.status)}>
+                      {feedback.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                    <Badge variant={getPriorityColor(feedback.priority)}>
+                      {feedback.priority.toUpperCase()}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <p className="text-gray-700">{feedback.feedback_text}</p>
+                  <p className="text-gray-700">{feedback.description}</p>
+                  
+                  {feedback.location_details && (
+                    <div className="text-sm text-gray-600">
+                      📍 {feedback.location_details}
+                    </div>
+                  )}
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -86,12 +206,15 @@ const MyFeedbacks = () => {
                       <div className="flex">{renderStars(feedback.rating)}</div>
                     </div>
                     <div className="text-sm text-gray-500">
-                      {feedback.district} • {feedback.mandal}
+                      {feedback.district} • {feedback.mandal} • {feedback.village}
                     </div>
                   </div>
                   
-                  <div className="text-sm text-gray-400">
-                    Submitted on: {new Date(feedback.created_at).toLocaleDateString()}
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Service: {feedback.service_type}</span>
+                    <span className="text-gray-400">
+                      Submitted: {formatDate(feedback.created_at)}
+                    </span>
                   </div>
                 </div>
               </CardContent>

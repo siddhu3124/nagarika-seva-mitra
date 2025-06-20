@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import OfficialNavigation from '@/components/OfficialNavigation';
 
 const SendMessages = () => {
@@ -18,18 +19,17 @@ const SendMessages = () => {
 
   const [message, setMessage] = useState({
     title: '',
-    message: '',
+    content: '',
     district: '',
     mandal: '',
-    village: '',
-    urgency: '',
-    image: null as File | null
+    village: ''
   });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!message.title || !message.message || !message.district || !message.urgency) {
+    if (!message.title || !message.content || !message.district) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -38,36 +38,56 @@ const SendMessages = () => {
       return;
     }
 
-    // Mock message sending - in real app, this would save to Supabase
-    const messageData = {
-      ...message,
-      created_by: user?.id,
-      created_at: new Date().toISOString()
-    };
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to send messages",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    console.log('Sending message:', messageData);
+    setLoading(true);
 
-    toast({
-      title: "Success",
-      description: "Message sent successfully to citizens!",
-    });
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          title: message.title,
+          content: message.content,
+          target_roles: ['citizen'],
+          district: message.district === 'all' ? null : message.district,
+          mandal: message.mandal === 'all' ? null : message.mandal,
+          village: message.village === 'all' ? null : message.village
+        });
 
-    // Reset form
-    setMessage({
-      title: '',
-      message: '',
-      district: '',
-      mandal: '',
-      village: '',
-      urgency: '',
-      image: null
-    });
-  };
+      if (error) {
+        throw error;
+      }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setMessage({...message, image: file});
+      toast({
+        title: "Success",
+        description: "Message sent successfully to citizens!",
+      });
+
+      // Reset form
+      setMessage({
+        title: '',
+        content: '',
+        district: '',
+        mandal: '',
+        village: ''
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,7 +110,7 @@ const SendMessages = () => {
                   id="title"
                   value={message.title}
                   onChange={(e) => setMessage({...message, title: e.target.value})}
-                  placeholder={t('message_title_placeholder')}
+                  placeholder="Enter message title"
                 />
               </div>
 
@@ -148,53 +168,22 @@ const SendMessages = () => {
               </div>
 
               <div>
-                <Label htmlFor="urgency">Urgency Level *</Label>
-                <Select onValueChange={(value) => setMessage({...message, urgency: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select urgency level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getOptions('urgency').map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="message-text">Message Content *</Label>
+                <Label htmlFor="content">Message Content *</Label>
                 <Textarea
-                  id="message-text"
-                  value={message.message}
-                  onChange={(e) => setMessage({...message, message: e.target.value})}
-                  placeholder={t('message_body_placeholder')}
-                  rows={5}
+                  id="content"
+                  value={message.content}
+                  onChange={(e) => setMessage({...message, content: e.target.value})}
+                  placeholder="Enter your message content here..."
+                  rows={6}
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="image">Attach Image (Optional)</Label>
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="cursor-pointer"
-                />
-                {message.image && (
-                  <p className="text-sm text-green-600 mt-2">
-                    Image selected: {message.image.name}
-                  </p>
-                )}
               </div>
 
               <Button 
                 type="submit" 
+                disabled={loading}
                 className="w-full bg-government-blue hover:bg-government-blue/90"
               >
-                Send Message 📤
+                {loading ? 'Sending...' : 'Send Message 📤'}
               </Button>
             </form>
           </CardContent>
