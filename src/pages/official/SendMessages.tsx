@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import OfficialNavigation from '@/components/OfficialNavigation';
 import { useState } from 'react';
 
 const SendMessages = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
 
   const [messageForm, setMessageForm] = useState({
@@ -98,7 +100,7 @@ const SendMessages = () => {
                 id="title"
                 value={messageForm.title}
                 onChange={(e) => setMessageForm({...messageForm, title: e.target.value})}
-                placeholder="Enter message title..."
+                placeholder={t('message_title_placeholder')}
               />
             </div>
 
@@ -108,7 +110,7 @@ const SendMessages = () => {
                 id="message"
                 value={messageForm.message}
                 onChange={(e) => setMessageForm({...messageForm, message: e.target.value})}
-                placeholder="Type your message here..."
+                placeholder={t('message_body_placeholder')}
                 rows={6}
               />
             </div>
@@ -118,7 +120,7 @@ const SendMessages = () => {
                 <Label htmlFor="district">District *</Label>
                 <Select onValueChange={(value) => setMessageForm({...messageForm, district: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select District" />
+                    <SelectValue placeholder={t('select_district_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hyderabad">హైదరాబాద్</SelectItem>
@@ -132,7 +134,7 @@ const SendMessages = () => {
                 <Label htmlFor="mandal">Mandal</Label>
                 <Select onValueChange={(value) => setMessageForm({...messageForm, mandal: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Mandal" />
+                    <SelectValue placeholder={t('select_mandal_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="secunderabad">సికింద్రాబాద్</SelectItem>
@@ -147,7 +149,7 @@ const SendMessages = () => {
                 <Label htmlFor="village">Village</Label>
                 <Select onValueChange={(value) => setMessageForm({...messageForm, village: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Village" />
+                    <SelectValue placeholder={t('select_village_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="village1">గ్రామం 1</SelectItem>

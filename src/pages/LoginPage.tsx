@@ -120,7 +120,7 @@ const LoginPage = () => {
                       id="citizen-name"
                       value={citizenForm.name}
                       onChange={(e) => setCitizenForm({...citizenForm, name: e.target.value})}
-                      placeholder="మీ పేరు నమోదు చేయండి"
+                      placeholder={t('enter_name_placeholder')}
                     />
                   </div>
 
@@ -132,14 +132,14 @@ const LoginPage = () => {
                         type="number"
                         value={citizenForm.age}
                         onChange={(e) => setCitizenForm({...citizenForm, age: e.target.value})}
-                        placeholder="వయస్సు"
+                        placeholder={t('enter_age_placeholder')}
                       />
                     </div>
                     <div>
                       <Label htmlFor="gender">{t('gender')}</Label>
                       <Select onValueChange={(value) => setCitizenForm({...citizenForm, gender: value})}>
                         <SelectTrigger>
-                          <SelectValue placeholder="లింగం" />
+                          <SelectValue placeholder={t('select_gender_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="male">{t('male')}</SelectItem>
@@ -156,7 +156,7 @@ const LoginPage = () => {
                       id="locality"
                       value={citizenForm.locality}
                       onChange={(e) => setCitizenForm({...citizenForm, locality: e.target.value})}
-                      placeholder="మీ ప్రాంతం"
+                      placeholder={t('enter_locality_placeholder')}
                     />
                   </div>
 
@@ -165,7 +165,7 @@ const LoginPage = () => {
                       <Label htmlFor="district">{t('district')}</Label>
                       <Select onValueChange={(value) => setCitizenForm({...citizenForm, district: value})}>
                         <SelectTrigger>
-                          <SelectValue placeholder="జిల్లా" />
+                          <SelectValue placeholder={t('select_district_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="hyderabad">హైదరాబాద్</SelectItem>
@@ -178,7 +178,7 @@ const LoginPage = () => {
                       <Label htmlFor="mandal">{t('mandal')}</Label>
                       <Select onValueChange={(value) => setCitizenForm({...citizenForm, mandal: value})}>
                         <SelectTrigger>
-                          <SelectValue placeholder="మండలం" />
+                          <SelectValue placeholder={t('select_mandal_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="secunderabad">సికింద్రాబాద్</SelectItem>
@@ -191,7 +191,7 @@ const LoginPage = () => {
                       <Label htmlFor="village">{t('village')}</Label>
                       <Select onValueChange={(value) => setCitizenForm({...citizenForm, village: value})}>
                         <SelectTrigger>
-                          <SelectValue placeholder="గ్రామం" />
+                          <SelectValue placeholder={t('select_village_placeholder')} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="village1">గ్రామం 1</SelectItem>
@@ -209,7 +209,7 @@ const LoginPage = () => {
                       type="tel"
                       value={citizenForm.phone_number}
                       onChange={(e) => setCitizenForm({...citizenForm, phone_number: e.target.value})}
-                      placeholder="+91 9876543210"
+                      placeholder={t('enter_phone_placeholder')}
                     />
                   </div>
 
@@ -230,7 +230,7 @@ const LoginPage = () => {
                       id="official-name"
                       value={officialForm.name}
                       onChange={(e) => setOfficialForm({...officialForm, name: e.target.value})}
-                      placeholder="అధికారి పేరు"
+                      placeholder={t('official_name_placeholder')}
                     />
                   </div>
 
@@ -238,7 +238,7 @@ const LoginPage = () => {
                     <Label htmlFor="department">{t('department')} *</Label>
                     <Select onValueChange={(value) => setOfficialForm({...officialForm, department: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="విభాగం ఎంచుకోండి" />
+                        <SelectValue placeholder={t('select_department_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="health">ఆరోగ్య శాఖ</SelectItem>
@@ -256,7 +256,7 @@ const LoginPage = () => {
                       id="employee-id"
                       value={officialForm.employee_id}
                       onChange={(e) => setOfficialForm({...officialForm, employee_id: e.target.value})}
-                      placeholder="EMP001"
+                      placeholder={t('employee_id_placeholder')}
                     />
                   </div>
 
@@ -267,7 +267,7 @@ const LoginPage = () => {
                       type="tel"
                       value={officialForm.phone_number}
                       onChange={(e) => setOfficialForm({...officialForm, phone_number: e.target.value})}
-                      placeholder="+91 9876543210"
+                      placeholder={t('enter_phone_placeholder')}
                     />
                   </div>
 

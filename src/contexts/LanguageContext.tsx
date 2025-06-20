@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState } from 'react';
 
 type Language = 'telugu' | 'english' | 'urdu';
@@ -127,6 +126,81 @@ const translations: Translations = {
     telugu: 'ఇతర',
     english: 'Other',
     urdu: 'دیگر'
+  },
+  'enter_name_placeholder': {
+    telugu: 'మీ పేరు నమోదు చేయండి',
+    english: 'Enter your name',
+    urdu: 'اپنا نام درج کریں'
+  },
+  'enter_age_placeholder': {
+    telugu: 'వయస్సు',
+    english: 'Age',
+    urdu: 'عمر'
+  },
+  'select_gender_placeholder': {
+    telugu: 'లింగం',
+    english: 'Gender',
+    urdu: 'جنس'
+  },
+  'enter_locality_placeholder': {
+    telugu: 'మీ ప్రాంతం',
+    english: 'Your locality',
+    urdu: 'اپنا علاقہ'
+  },
+  'select_district_placeholder': {
+    telugu: 'జిల్లా',
+    english: 'District',
+    urdu: 'ضلع'
+  },
+  'select_mandal_placeholder': {
+    telugu: 'మండలం',
+    english: 'Mandal',
+    urdu: 'منڈل'
+  },
+  'select_village_placeholder': {
+    telugu: 'గ్రామం',
+    english: 'Village',
+    urdu: 'گاؤں'
+  },
+  'enter_phone_placeholder': {
+    telugu: '+91 9876543210',
+    english: '+91 9876543210',
+    urdu: '+91 9876543210'
+  },
+  'official_name_placeholder': {
+    telugu: 'అధికారి పేరు',
+    english: 'Official name',
+    urdu: 'سرکاری نام'
+  },
+  'select_department_placeholder': {
+    telugu: 'విభాగం ఎంచుకోండి',
+    english: 'Select department',
+    urdu: 'شعبہ منتخب کریں'
+  },
+  'employee_id_placeholder': {
+    telugu: 'EMP001',
+    english: 'EMP001',
+    urdu: 'EMP001'
+  },
+  'select_service_placeholder': {
+    telugu: 'సేవా రకం ఎంచుకోండి',
+    english: 'Select service type',
+    urdu: 'سروس کی قسم منتخب کریں'
+  },
+  'feedback_placeholder': {
+    telugu: 'మీ అభిప్రాయం వివరంగా రాయండి...',
+    english: 'Write your feedback in detail...',
+    urdu: 'اپنی رائے تفصیل سے لکھیں...'
+  },
+  'message_title_placeholder': {
+    telugu: 'సందేశ శీర్షిక నమోదు చేయండి...',
+    english: 'Enter message title...',
+    urdu: 'پیغام کا عنوان درج کریں...'
+  },
+  'message_body_placeholder': {
+    telugu: 'మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి...',
+    english: 'Type your message here...',
+    urdu: 'اپنا پیغام یہاں ٹائپ کریں...'
   }
 };
 

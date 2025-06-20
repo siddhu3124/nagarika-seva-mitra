@@ -110,7 +110,7 @@ const FeedbackForm = () => {
                 <Label htmlFor="district">{t('district')} *</Label>
                 <Select value={formData.district} onValueChange={(value) => setFormData({...formData, district: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select your District" />
+                    <SelectValue placeholder={t('select_district_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hyderabad">హైదరాబాద్</SelectItem>
@@ -123,7 +123,7 @@ const FeedbackForm = () => {
                 <Label htmlFor="mandal">{t('mandal')} *</Label>
                 <Select value={formData.mandal} onValueChange={(value) => setFormData({...formData, mandal: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="మండలం ఎంచుకోండి" />
+                    <SelectValue placeholder={t('select_mandal_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="secunderabad">సికింద్రాబాద్</SelectItem>
@@ -136,7 +136,7 @@ const FeedbackForm = () => {
                 <Label htmlFor="village">{t('village')} *</Label>
                 <Select value={formData.village} onValueChange={(value) => setFormData({...formData, village: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="గ్రామం ఎంచుకోండి" />
+                    <SelectValue placeholder={t('select_village_placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="village1">గ్రామం 1</SelectItem>
@@ -151,7 +151,7 @@ const FeedbackForm = () => {
               <Label htmlFor="service">{t('service_type')} *</Label>
               <Select onValueChange={(value) => setFormData({...formData, service_type: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="సేవా రకం ఎంచుకోండి" />
+                  <SelectValue placeholder={t('select_service_placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {serviceTypes.map((service) => (
@@ -186,7 +186,7 @@ const FeedbackForm = () => {
                 id="feedback"
                 value={formData.feedback_text}
                 onChange={(e) => setFormData({...formData, feedback_text: e.target.value})}
-                placeholder="మీ అభిప్రాయం వివరంగా రాయండి..."
+                placeholder={t('feedback_placeholder')}
                 rows={4}
               />
             </div>
