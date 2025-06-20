@@ -51,6 +51,51 @@ export type Database = {
         }
         Relationships: []
       }
+      citizen_feedback: {
+        Row: {
+          created_at: string
+          district: string | null
+          feedback_text: string
+          id: string
+          location: string | null
+          mandal: string | null
+          rating: number
+          service_type: string | null
+          title: string | null
+          updated_at: string
+          user_id: string | null
+          village: string | null
+        }
+        Insert: {
+          created_at?: string
+          district?: string | null
+          feedback_text: string
+          id?: string
+          location?: string | null
+          mandal?: string | null
+          rating: number
+          service_type?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+          village?: string | null
+        }
+        Update: {
+          created_at?: string
+          district?: string | null
+          feedback_text?: string
+          id?: string
+          location?: string | null
+          mandal?: string | null
+          rating?: number
+          service_type?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+          village?: string | null
+        }
+        Relationships: []
+      }
       districts: {
         Row: {
           code: string

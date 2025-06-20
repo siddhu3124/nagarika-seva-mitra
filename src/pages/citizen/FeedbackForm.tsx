@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,17 +22,16 @@ const FeedbackForm = () => {
   const [feedback, setFeedback] = useState({
     service_type: '',
     title: '',
-    description: '',
+    feedback_text: '',
     rating: '',
-    location_details: ''
+    location: ''
   });
-  const [attachments, setAttachments] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!feedback.service_type || !feedback.title || !feedback.description || !feedback.rating) {
+    if (!feedback.service_type || !feedback.title || !feedback.feedback_text || !feedback.rating) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -40,113 +40,32 @@ const FeedbackForm = () => {
       return;
     }
 
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to submit feedback",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // First, check if user exists in users table, if not create them
-      let citizenId = user.id;
-      
-      // If user ID has citizen_ prefix, we need to handle it differently
-      if (user.id.startsWith('citizen_')) {
-        // Check if user exists in users table
-        const { data: existingUser, error: userCheckError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('phone_number', user.phone_number)
-          .eq('role', 'citizen')
-          .single();
+      // Prepare the data for citizen_feedback table
+      const feedbackData = {
+        service_type: feedback.service_type,
+        title: feedback.title,
+        feedback_text: feedback.feedback_text,
+        rating: parseInt(feedback.rating),
+        location: feedback.location || null,
+        district: user?.district || null,
+        mandal: user?.mandal || null,
+        village: user?.village || null,
+        user_id: user?.id || null // Allow anonymous submissions
+      };
 
-        if (userCheckError && userCheckError.code !== 'PGRST116') {
-          console.error('Error checking user:', userCheckError);
-          throw new Error('Failed to verify user');
-        }
+      console.log('Submitting feedback data:', feedbackData);
 
-        if (existingUser) {
-          citizenId = existingUser.id;
-        } else {
-          // Create user in users table
-          const { data: newUser, error: createUserError } = await supabase
-            .from('users')
-            .insert({
-              name: user.name,
-              age: user.age,
-              gender: user.gender,
-              phone_number: user.phone_number,
-              locality: user.locality,
-              district: user.district,
-              mandal: user.mandal,
-              village: user.village,
-              role: 'citizen'
-            })
-            .select()
-            .single();
+      // Insert feedback into citizen_feedback table
+      const { error } = await supabase
+        .from('citizen_feedback')
+        .insert(feedbackData);
 
-          if (createUserError) {
-            console.error('Error creating user:', createUserError);
-            throw createUserError;
-          }
-
-          citizenId = newUser.id;
-        }
-      }
-
-      // Insert feedback into database
-      const { data: feedbackData, error: feedbackError } = await supabase
-        .from('feedbacks')
-        .insert({
-          citizen_id: citizenId,
-          service_type: feedback.service_type,
-          title: feedback.title,
-          description: feedback.description,
-          rating: parseInt(feedback.rating),
-          location_details: feedback.location_details,
-          district: user.district,
-          mandal: user.mandal,
-          village: user.village
-        })
-        .select()
-        .single();
-
-      if (feedbackError) {
-        console.error('Error submitting feedback:', feedbackError);
-        throw feedbackError;
-      }
-
-      // Upload attachments if any
-      if (attachments.length > 0) {
-        for (const file of attachments) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${citizenId}/${feedbackData.id}/${Date.now()}.${fileExt}`;
-          
-          const { error: uploadError } = await supabase.storage
-            .from('feedback-attachments')
-            .upload(fileName, file);
-
-          if (uploadError) {
-            console.error('Error uploading file:', uploadError);
-          } else {
-            // Save file metadata
-            await supabase
-              .from('file_uploads')
-              .insert({
-                user_id: citizenId,
-                feedback_id: feedbackData.id,
-                file_name: file.name,
-                file_size: file.size,
-                file_type: file.type,
-                storage_path: fileName
-              });
-          }
-        }
+      if (error) {
+        console.error('Error submitting feedback:', error);
+        throw error;
       }
 
       toast({
@@ -158,11 +77,10 @@ const FeedbackForm = () => {
       setFeedback({
         service_type: '',
         title: '',
-        description: '',
+        feedback_text: '',
         rating: '',
-        location_details: ''
+        location: ''
       });
-      setAttachments([]);
 
       navigate('/thank-you');
     } catch (error) {
@@ -175,16 +93,6 @@ const FeedbackForm = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAttachments(Array.from(e.target.files));
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setAttachments(attachments.filter((_, i) => i !== index));
   };
 
   const ratingOptions = [
@@ -251,53 +159,24 @@ const FeedbackForm = () => {
               </div>
 
               <div>
-                <Label htmlFor="location">Specific Location Details (Optional)</Label>
+                <Label htmlFor="location">Location Details (Optional)</Label>
                 <Input
                   id="location"
-                  value={feedback.location_details}
-                  onChange={(e) => setFeedback({...feedback, location_details: e.target.value})}
+                  value={feedback.location}
+                  onChange={(e) => setFeedback({...feedback, location: e.target.value})}
                   placeholder="Street address, landmark, etc."
                 />
               </div>
 
               <div>
-                <Label htmlFor="description">Detailed Description *</Label>
+                <Label htmlFor="feedback_text">Detailed Description *</Label>
                 <Textarea
-                  id="description"
-                  value={feedback.description}
-                  onChange={(e) => setFeedback({...feedback, description: e.target.value})}
+                  id="feedback_text"
+                  value={feedback.feedback_text}
+                  onChange={(e) => setFeedback({...feedback, feedback_text: e.target.value})}
                   placeholder={t('feedback_placeholder')}
                   rows={5}
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="attachments">Attach Photos/Documents (Optional)</Label>
-                <Input
-                  id="attachments"
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  className="cursor-pointer"
-                />
-                {attachments.length > 0 && (
-                  <div className="mt-2 space-y-2">
-                    {attachments.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded">
-                        <span className="text-sm">{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <Button 
