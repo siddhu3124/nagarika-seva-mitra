@@ -15,13 +15,13 @@ interface PhoneVerificationStepProps {
 const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerificationComplete }) => {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { loading: phoneLoading, phoneNumber, sendOTP, verifyOTP, resetOTP } = usePhoneAuth();
+  const { loading: phoneLoading, phoneNumber, canResend, sendOTP, verifyOTP, resetOTP } = usePhoneAuth();
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [currentPhoneNumber, setCurrentPhoneNumber] = useState('+91');
 
-  // Memoize validation logic for better performance
+  // Memoize validation logic for better performance with strict Indian mobile format
   const isValidPhoneNumber = useMemo(() => {
-    // Check if phone number has valid format: +91 followed by 10 digits
+    // Check if phone number has valid format: +91 followed by 10 digits starting with 6-9
     const phoneRegex = /^\+91[6-9]\d{9}$/;
     return phoneRegex.test(currentPhoneNumber);
   }, [currentPhoneNumber]);
@@ -47,18 +47,18 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
     setCurrentPhoneNumber(formattedValue);
   }, []);
 
-  // Handle key press to prevent invalid characters
+  // Handle key press to prevent invalid characters and enforce format
   const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     const char = e.key;
     const value = e.currentTarget.value;
+    const selectionStart = e.currentTarget.selectionStart || 0;
     
-    // Allow backspace, delete, tab, escape, enter
-    if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter'].includes(char)) {
+    // Allow backspace, delete, tab, escape, enter, arrow keys
+    if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
       return;
     }
     
-    // If cursor is before position 3 (within +91), prevent input
-    const selectionStart = e.currentTarget.selectionStart || 0;
+    // If cursor is before position 3 (within +91), prevent input except for specific cases
     if (selectionStart < 3) {
       e.preventDefault();
       return;
@@ -76,12 +76,22 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
     }
   }, []);
 
+  // Handle cursor positioning to prevent editing +91 prefix
+  const handleClick = useCallback((e: React.MouseEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    if (input.selectionStart !== null && input.selectionStart < 3) {
+      setTimeout(() => {
+        input.setSelectionRange(3, 3);
+      }, 0);
+    }
+  }, []);
+
   // Optimized OTP send handler
   const handleSendOTP = useCallback(async () => {
     if (!isValidPhoneNumber) {
       toast({
-        title: "Error",
-        description: "Please enter a valid Indian mobile number (+91XXXXXXXXXX)",
+        title: "Invalid Phone Number",
+        description: "Please enter a valid Indian mobile number starting with 6, 7, 8, or 9",
         variant: "destructive"
       });
       return;
@@ -90,10 +100,6 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
     const success = await sendOTP(currentPhoneNumber);
     if (success) {
       setStep('otp');
-      toast({
-        title: "OTP Sent",
-        description: `Verification code sent to ${currentPhoneNumber}`,
-      });
     }
   }, [currentPhoneNumber, isValidPhoneNumber, sendOTP, toast]);
 
@@ -131,14 +137,20 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
             value={currentPhoneNumber}
             onChange={handlePhoneChange}
             onKeyDown={handleKeyPress}
+            onClick={handleClick}
             placeholder="+91XXXXXXXXXX"
             maxLength={13}
             autoComplete="tel"
             className="font-mono"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Format: +91 followed by 10 digits (e.g., +919876543210)
+            Format: +91 followed by 10 digits starting with 6, 7, 8, or 9
           </p>
+          {currentPhoneNumber.length > 3 && !isValidPhoneNumber && (
+            <p className="text-xs text-red-500 mt-1">
+              Invalid format. Number must start with 6, 7, 8, or 9 after +91
+            </p>
+          )}
         </div>
         <Button 
           onClick={handleSendOTP}
@@ -157,6 +169,7 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
       onResend={handleResendOTP}
       loading={phoneLoading}
       phoneNumber={phoneNumber}
+      canResend={canResend}
     />
   );
 };

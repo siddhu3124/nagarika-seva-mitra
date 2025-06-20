@@ -9,9 +9,10 @@ interface OTPInputProps {
   onResend: () => void;
   loading: boolean;
   phoneNumber: string;
+  canResend: boolean;
 }
 
-const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneNumber }) => {
+const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneNumber, canResend }) => {
   const [otp, setOtp] = useState('');
   const { t } = useLanguage();
 
@@ -20,10 +21,14 @@ const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneN
 
   // Optimize OTP verification with useCallback
   const handleVerify = useCallback(async () => {
-    if (isValidOTP) {
-      await onVerify(otp);
+    if (isValidOTP && !loading) {
+      const success = await onVerify(otp);
+      if (!success) {
+        // Clear OTP on failure so user can try again
+        setOtp('');
+      }
     }
-  }, [otp, isValidOTP, onVerify]);
+  }, [otp, isValidOTP, onVerify, loading]);
 
   // Optimize OTP change handler
   const handleOTPChange = useCallback((value: string) => {
@@ -74,10 +79,10 @@ const OTPInput: React.FC<OTPInputProps> = ({ onVerify, onResend, loading, phoneN
         <Button 
           variant="outline"
           onClick={onResend}
-          disabled={loading}
+          disabled={loading || !canResend}
           className="w-full"
         >
-          {t('resend_otp')}
+          {!canResend ? 'Resend in 30s' : t('resend_otp')}
         </Button>
       </div>
     </div>

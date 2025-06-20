@@ -29,42 +29,61 @@ const CitizenProfileForm: React.FC = () => {
     phone_number: ''
   });
 
-  // Get all options
+  // Get all options from language context
   const allDistricts = getOptions('districts');
   const allMandals = getOptions('mandals');
   const allVillages = getOptions('villages');
 
-  // Create mapping objects for better filtering
-  const districtMandalsMap = {
-    'hyderabad': ['secunderabad', 'kukatpally', 'lbnagar'],
-    'warangal': ['warangal_urban', 'warangal_rural'],
-    'nizamabad': ['nizamabad_urban', 'nizamabad_rural']
+  // Improved cascading dropdown logic with proper filtering
+  const getFilteredMandals = () => {
+    if (!citizenForm.district) return [];
+    
+    // Filter mandals based on selected district
+    return allMandals.filter(mandal => {
+      // The mandal values should contain the district as a prefix or be associated
+      // This is a simplified version - in a real app you'd have proper relational data
+      switch (citizenForm.district) {
+        case 'hyderabad':
+          return ['secunderabad', 'kukatpally', 'lbnagar'].includes(mandal.value);
+        case 'warangal':
+          return ['warangal_urban', 'warangal_rural'].includes(mandal.value);
+        case 'nizamabad':
+          return ['nizamabad_urban', 'nizamabad_rural'].includes(mandal.value);
+        default:
+          return false;
+      }
+    });
   };
 
-  const mandalVillagesMap = {
-    'secunderabad': ['village1', 'village2'],
-    'kukatpally': ['village2', 'village3'],
-    'lbnagar': ['village1', 'village3'],
-    'warangal_urban': ['village1', 'village2'],
-    'warangal_rural': ['village2', 'village3'],
-    'nizamabad_urban': ['village1', 'village3'],
-    'nizamabad_rural': ['village1', 'village2']
+  const getFilteredVillages = () => {
+    if (!citizenForm.mandal) return [];
+    
+    // Filter villages based on selected mandal
+    return allVillages.filter(village => {
+      // The village values should be associated with the mandal
+      switch (citizenForm.mandal) {
+        case 'secunderabad':
+          return ['village1', 'village2'].includes(village.value);
+        case 'kukatpally':
+          return ['village2', 'village3'].includes(village.value);
+        case 'lbnagar':
+          return ['village1', 'village3'].includes(village.value);
+        case 'warangal_urban':
+          return ['village1', 'village2'].includes(village.value);
+        case 'warangal_rural':
+          return ['village2', 'village3'].includes(village.value);
+        case 'nizamabad_urban':
+          return ['village1', 'village3'].includes(village.value);
+        case 'nizamabad_rural':
+          return ['village1', 'village2'].includes(village.value);
+        default:
+          return false;
+      }
+    });
   };
 
-  // Improved cascading dropdown logic
-  const filteredMandals = citizenForm.district 
-    ? allMandals.filter(mandal => {
-        const allowedMandals = districtMandalsMap[citizenForm.district as keyof typeof districtMandalsMap] || [];
-        return allowedMandals.includes(mandal.value);
-      })
-    : [];
-
-  const filteredVillages = citizenForm.mandal 
-    ? allVillages.filter(village => {
-        const allowedVillages = mandalVillagesMap[citizenForm.mandal as keyof typeof mandalVillagesMap] || [];
-        return allowedVillages.includes(village.value);
-      })
-    : [];
+  const filteredMandals = getFilteredMandals();
+  const filteredVillages = getFilteredVillages();
 
   const handleDistrictChange = (value: string) => {
     setCitizenForm({
@@ -259,7 +278,7 @@ const CitizenProfileForm: React.FC = () => {
             <SelectTrigger>
               <SelectValue placeholder={t('select_district_placeholder')} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white z-50">
               {allDistricts.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
@@ -284,7 +303,7 @@ const CitizenProfileForm: React.FC = () => {
                 } 
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white z-50">
               {filteredMandals.length > 0 ? (
                 filteredMandals.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
@@ -315,7 +334,7 @@ const CitizenProfileForm: React.FC = () => {
                 } 
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white z-50">
               {filteredVillages.length > 0 ? (
                 filteredVillages.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
