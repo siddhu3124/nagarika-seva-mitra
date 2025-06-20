@@ -16,19 +16,23 @@ const LoginPage = () => {
   useEffect(() => {
     console.log('LoginPage useEffect - Auth state:', { isAuthenticated, authLoading, user, hasSession: !!session });
     
-    if (!authLoading && isAuthenticated) {
-      // If user has completed profile, redirect to dashboard
-      if (user && user.role) {
+    if (!authLoading) {
+      if (isAuthenticated && user && user.role) {
+        // User is fully authenticated with profile, redirect to dashboard
         console.log('User authenticated with profile, redirecting...', user);
         if (user.role === 'citizen') {
           navigate('/citizen');
         } else if (user.role === 'official') {
           navigate('/official');
         }
-      } else if (session && !user) {
+      } else if (isAuthenticated && session && !user) {
         // User is authenticated but hasn't completed profile, show profile step
         console.log('User authenticated but no profile, showing profile completion');
         setStep('profile');
+      } else if (!isAuthenticated) {
+        // User is not authenticated, show phone verification
+        console.log('User not authenticated, showing phone verification');
+        setStep('phone');
       }
     }
   }, [isAuthenticated, authLoading, user, session, navigate]);

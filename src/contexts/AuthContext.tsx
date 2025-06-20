@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -62,6 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: 'official'
           };
           setUser(userData);
+          setLoading(false);
         } else {
           console.log('No stored employee info, fetching user profile from database');
           // Try to fetch user profile from database
@@ -71,8 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('No session, clearing user state');
         setUser(null);
         localStorage.removeItem('employeeInfo');
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     // THEN check for existing session
@@ -101,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error fetching user profile:', error);
+        // If no profile found, clear user but keep session for profile completion
         setUser(null);
       } else if (data) {
         console.log('User profile found:', data);
@@ -116,6 +117,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
       setUser(null);
+    } finally {
+      setLoading(false);
     }
   };
 
