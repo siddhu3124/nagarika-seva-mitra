@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFeedbackSubmission, FeedbackData } from '@/hooks/useFeedbackSubmission';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const FeedbackForm: React.FC = () => {
   const { t } = useLanguage();
@@ -27,6 +28,7 @@ const FeedbackForm: React.FC = () => {
   });
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const serviceTypes = [
     'Healthcare',
@@ -42,6 +44,7 @@ const FeedbackForm: React.FC = () => {
   ];
 
   const handleInputChange = (field: keyof FeedbackData, value: string | number) => {
+    console.log(`🔄 Form field changed: ${field} =`, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -60,19 +63,25 @@ const FeedbackForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Form submission started with data:', formData);
+    console.log('📝 Form submission started with data:', formData);
+    setDebugInfo('Starting form submission...');
     
     // Validate form data
     const errors = validateFeedback(formData);
     if (errors.length > 0) {
       setValidationErrors(errors);
+      setDebugInfo(`Validation failed with ${errors.length} errors`);
       return;
     }
+
+    setDebugInfo('Form validated successfully, submitting...');
 
     // Submit feedback
     const success = await submitFeedback(formData as FeedbackData);
     
     if (success) {
+      console.log('✅ Form submission completed successfully');
+      setDebugInfo('Feedback submitted successfully!');
       // Reset form on success
       setFormData({
         service_type: '',
@@ -85,6 +94,8 @@ const FeedbackForm: React.FC = () => {
         mandal: '',
         district: ''
       });
+    } else {
+      setDebugInfo('Feedback submission failed - check console for details');
     }
   };
 
@@ -97,6 +108,15 @@ const FeedbackForm: React.FC = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Debug Info */}
+          {debugInfo && (
+            <Alert>
+              <AlertDescription>
+                <strong>Debug Info:</strong> {debugInfo}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Validation Errors */}
           {validationErrors.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">

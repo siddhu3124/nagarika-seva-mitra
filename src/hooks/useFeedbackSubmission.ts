@@ -25,19 +25,24 @@ export const useFeedbackSubmission = () => {
     setIsSubmitting(true);
 
     try {
-      console.log('Attempting to submit feedback:', feedbackData);
+      console.log('🚀 Starting feedback submission...');
+      console.log('📝 Feedback data:', feedbackData);
 
       // Get current user session
+      console.log('🔐 Checking authentication...');
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Authentication error');
+        console.error('❌ Session error:', sessionError);
+        throw new Error(`Authentication error: ${sessionError.message}`);
       }
 
-      // Get user ID from the users table
+      console.log('👤 Session status:', session ? 'Authenticated' : 'Anonymous');
+
+      // Get user ID from the users table if authenticated
       let userId = null;
       if (session?.user) {
+        console.log('🔍 Looking up user in database...');
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('id')
@@ -45,11 +50,10 @@ export const useFeedbackSubmission = () => {
           .single();
 
         if (userError) {
-          console.error('User lookup error:', userError);
-          // Continue without user_id for anonymous feedback
-        } else {
-          userId = userData?.id;
-          console.log('Found user ID:', userId);
+          console.warn('⚠️ User lookup error (continuing as anonymous):', userError);
+        } else if (userData) {
+          userId = userData.id;
+          console.log('✅ Found user ID:', userId);
         }
       }
 
@@ -69,7 +73,7 @@ export const useFeedbackSubmission = () => {
         updated_at: new Date().toISOString()
       };
 
-      console.log('Inserting feedback record:', feedbackRecord);
+      console.log('📋 Inserting feedback record:', feedbackRecord);
 
       // Insert feedback into database
       const { data, error } = await supabase
@@ -79,31 +83,40 @@ export const useFeedbackSubmission = () => {
         .single();
 
       if (error) {
-        console.error('Database insert error:', error);
+        console.error('❌ Database insert error:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        
         toast({
           title: "Submission Failed",
-          description: error.message || "Failed to submit feedback. Please try again.",
+          description: `Database error: ${error.message}. ${error.hint ? `Hint: ${error.hint}` : ''}`,
           variant: "destructive"
         });
         return false;
       }
 
-      console.log('Feedback submitted successfully:', data);
+      console.log('✅ Feedback submitted successfully:', data);
 
       toast({
         title: "Feedback Submitted",
         description: "Your feedback has been submitted successfully. Thank you!",
       });
 
-      // Navigate to thank you page or my feedbacks
+      // Navigate to thank you page
       navigate('/thank-you');
       return true;
 
-    } catch (error) {
-      console.error('Submission error:', error);
+    } catch (error: any) {
+      console.error('💥 Submission error:', error);
+      console.error('Error stack:', error.stack);
+      
       toast({
         title: "Submission Failed",
-        description: "Failed to submit feedback. Please try again.",
+        description: `Failed to submit feedback: ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
       return false;
@@ -114,6 +127,7 @@ export const useFeedbackSubmission = () => {
 
   const validateFeedback = (feedbackData: Partial<FeedbackData>): string[] => {
     const errors: string[] = [];
+    console.log('🔍 Validating feedback data:', feedbackData);
 
     if (!feedbackData.service_type) {
       errors.push('Service category is required');
@@ -131,6 +145,7 @@ export const useFeedbackSubmission = () => {
       errors.push('Feedback must be at least 10 characters long');
     }
 
+    console.log('📊 Validation result:', errors.length > 0 ? `${errors.length} errors found` : 'Valid');
     return errors;
   };
 

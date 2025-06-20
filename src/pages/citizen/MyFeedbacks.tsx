@@ -11,10 +11,8 @@ interface Feedback {
   id: string;
   service_type: string;
   title: string;
-  description: string;
+  feedback_text: string;
   rating: number;
-  status: string;
-  priority: string;
   location_details: string | null;
   district: string | null;
   mandal: string | null;
@@ -27,6 +25,7 @@ const MyFeedbacks = () => {
   const { user, loading: authLoading } = useAuth();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -40,11 +39,12 @@ const MyFeedbacks = () => {
           {
             event: '*',
             schema: 'public',
-            table: 'feedbacks',
-            filter: `citizen_id=eq.${user.id}`
+            table: 'citizen_feedback',
+            filter: `user_id=eq.${user.id}`
           },
           () => {
-            fetchFeedbacks(); // Refetch when feedbacks change
+            console.log('📡 Real-time update detected, refetching feedbacks...');
+            fetchFeedbacks();
           }
         )
         .subscribe();
@@ -59,26 +59,39 @@ const MyFeedbacks = () => {
 
   const fetchFeedbacks = async () => {
     if (!user) {
+      console.log('👤 No user found, skipping feedback fetch');
       setFeedbacks([]);
       setLoading(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from('feedbacks')
+      console.log('🔍 Fetching feedbacks for user:', user.id);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from('citizen_feedback')
         .select('*')
-        .eq('citizen_id', user.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching feedbacks:', error);
+      if (fetchError) {
+        console.error('❌ Error fetching feedbacks:', fetchError);
+        console.error('Error details:', {
+          code: fetchError.code,
+          message: fetchError.message,
+          details: fetchError.details,
+          hint: fetchError.hint
+        });
+        setError(`Failed to load feedbacks: ${fetchError.message}`);
         setFeedbacks([]);
       } else {
+        console.log('✅ Feedbacks fetched successfully:', data?.length || 0, 'items');
         setFeedbacks(data || []);
       }
-    } catch (error) {
-      console.error('Error in fetchFeedbacks:', error);
+    } catch (error: any) {
+      console.error('💥 Error in fetchFeedbacks:', error);
+      setError(`Unexpected error: ${error.message}`);
       setFeedbacks([]);
     } finally {
       setLoading(false);
@@ -87,35 +100,18 @@ const MyFeedbacks = () => {
 
   const getServiceIcon = (serviceType: string) => {
     const icons: { [key: string]: string } = {
-      'roads': '🛣️',
-      'water': '💧',
-      'ration': '🍚',
-      'phc': '🏥',
-      'education': '🎓',
-      'electricity': '⚡',
-      'grievances': '📢'
+      'Healthcare': '🏥',
+      'Education': '🎓',
+      'Transportation': '🚌',
+      'Water Supply': '💧',
+      'Electricity': '⚡',
+      'Sanitation': '🧹',
+      'Public Safety': '🚔',
+      'Infrastructure': '🏗️',
+      'Government Services': '🏛️',
+      'Other': '📝'
     };
     return icons[serviceType] || '📝';
-  };
-
-  const getStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
-    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
-      'open': 'destructive',
-      'in_progress': 'default',
-      'resolved': 'default',
-      'closed': 'secondary'
-    };
-    return colors[status] || 'default';
-  };
-
-  const getPriorityColor = (priority: string): "default" | "destructive" | "outline" | "secondary" => {
-    const colors: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
-      'low': 'secondary',
-      'medium': 'default',
-      'high': 'destructive',
-      'urgent': 'destructive'
-    };
-    return colors[priority] || 'default';
   };
 
   const renderStars = (rating: number) => {
@@ -141,7 +137,10 @@ const MyFeedbacks = () => {
       <div className="min-h-screen bg-light-blue-bg">
         <CitizenNavigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading your feedbacks...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-government-blue mx-auto"></div>
+            <p className="mt-2">Loading your feedbacks...</p>
+          </div>
         </div>
       </div>
     );
@@ -155,6 +154,28 @@ const MyFeedbacks = () => {
           <Alert className="max-w-2xl mx-auto">
             <AlertDescription>
               Please log in to view your feedbacks.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-light-blue-bg">
+        <CitizenNavigation />
+        <div className="container mx-auto px-4 py-8">
+          <Alert className="max-w-2xl mx-auto" variant="destructive">
+            <AlertDescription>
+              {error}
+              <br />
+              <button 
+                onClick={fetchFeedbacks}
+                className="mt-2 text-sm underline hover:no-underline"
+              >
+                Try again
+              </button>
             </AlertDescription>
           </Alert>
         </div>
@@ -178,21 +199,13 @@ const MyFeedbacks = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center text-lg">
                     <span className="mr-2 text-2xl">{getServiceIcon(feedback.service_type)}</span>
-                    {feedback.title}
+                    {feedback.title || 'Feedback'}
                   </CardTitle>
-                  <div className="flex gap-2">
-                    <Badge variant={getStatusColor(feedback.status)}>
-                      {feedback.status.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                    <Badge variant={getPriorityColor(feedback.priority)}>
-                      {feedback.priority.toUpperCase()}
-                    </Badge>
-                  </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <p className="text-gray-700">{feedback.description}</p>
+                  <p className="text-gray-700">{feedback.feedback_text}</p>
                   
                   {feedback.location_details && (
                     <div className="text-sm text-gray-600">
@@ -205,9 +218,11 @@ const MyFeedbacks = () => {
                       <span className="text-sm text-gray-500">Rating:</span>
                       <div className="flex">{renderStars(feedback.rating)}</div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {feedback.district} • {feedback.mandal} • {feedback.village}
-                    </div>
+                    {(feedback.district || feedback.mandal || feedback.village) && (
+                      <div className="text-sm text-gray-500">
+                        {[feedback.district, feedback.mandal, feedback.village].filter(Boolean).join(' • ')}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center justify-between text-sm">
