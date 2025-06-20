@@ -9,22 +9,29 @@ import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [step, setStep] = useState<'phone' | 'profile'>('phone');
-  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { isAuthenticated, loading: authLoading, user, session } = useAuth();
   const navigate = useNavigate();
 
   // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
-    console.log('LoginPage useEffect - Auth state:', { isAuthenticated, authLoading, user });
+    console.log('LoginPage useEffect - Auth state:', { isAuthenticated, authLoading, user, hasSession: !!session });
     
-    if (!authLoading && isAuthenticated && user) {
-      console.log('User authenticated, redirecting...', user);
-      if (user.role === 'citizen') {
-        navigate('/citizen');
-      } else if (user.role === 'official') {
-        navigate('/official');
+    if (!authLoading && isAuthenticated) {
+      // If user has completed profile, redirect to dashboard
+      if (user && user.role) {
+        console.log('User authenticated with profile, redirecting...', user);
+        if (user.role === 'citizen') {
+          navigate('/citizen');
+        } else if (user.role === 'official') {
+          navigate('/official');
+        }
+      } else if (session && !user) {
+        // User is authenticated but hasn't completed profile, show profile step
+        console.log('User authenticated but no profile, showing profile completion');
+        setStep('profile');
       }
     }
-  }, [isAuthenticated, authLoading, user, navigate]);
+  }, [isAuthenticated, authLoading, user, session, navigate]);
 
   const handleVerificationComplete = () => {
     console.log('Phone verification complete, moving to profile step');

@@ -169,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     login,
     logout,
-    isAuthenticated: !!session && !!user, // Both session and user must exist
+    isAuthenticated: !!session, // Only require session for phone-verified users
     loading
   };
 
