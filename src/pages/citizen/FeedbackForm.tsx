@@ -110,7 +110,7 @@ const FeedbackForm = () => {
                 <Label htmlFor="district">{t('district')} *</Label>
                 <Select value={formData.district} onValueChange={(value) => setFormData({...formData, district: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="జిల్లా ఎంచుకోండి" />
+                    <SelectValue placeholder="Select your District" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="hyderabad">హైదరాబాద్</SelectItem>
