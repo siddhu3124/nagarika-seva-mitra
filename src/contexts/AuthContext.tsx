@@ -35,15 +35,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('AuthProvider: Setting up auth listeners');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
+      console.log('Auth state changed:', event, session?.user?.phone);
       setSession(session);
       
       if (session && session.user) {
+        console.log('Session found, checking for user profile');
+        
         // Check if we have stored employee info (for officials)
         const storedEmployeeInfo = localStorage.getItem('employeeInfo');
         if (storedEmployeeInfo) {
+          console.log('Found stored employee info');
           const employeeData = JSON.parse(storedEmployeeInfo);
           const userData: User = {
             id: 'official_' + employeeData.id,
@@ -58,10 +63,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setUser(userData);
         } else {
+          console.log('No stored employee info, fetching user profile from database');
           // Try to fetch user profile from database
           await fetchUserProfile(session.user.id);
         }
       } else {
+        console.log('No session, clearing user state');
         setUser(null);
         localStorage.removeItem('employeeInfo');
       }
@@ -70,19 +77,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session);
-      if (session) {
-        // The onAuthStateChange will handle setting the user
-      } else {
+      console.log('Initial session check:', session?.user?.phone);
+      if (!session) {
         setLoading(false);
       }
+      // The onAuthStateChange will handle setting the user if session exists
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('AuthProvider: Cleaning up auth listeners');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (authUserId: string) => {
     try {
+      console.log('Fetching user profile for auth user ID:', authUserId);
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -93,11 +103,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching user profile:', error);
         setUser(null);
       } else if (data) {
+        console.log('User profile found:', data);
         const userProfile: User = {
           ...data,
           role: data.role as 'citizen' | 'official'
         };
         setUser(userProfile);
+      } else {
+        console.log('No user profile found in database');
+        setUser(null);
       }
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
@@ -125,6 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
 
         if (error) {
+          console.error('Error saving user profile:', error);
           throw error;
         }
       }
@@ -138,6 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
+      console.log('Logging out user');
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
@@ -148,15 +164,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const contextValue = {
+    user,
+    session,
+    login,
+    logout,
+    isAuthenticated: !!session && !!user, // Both session and user must exist
+    loading
+  };
+
+  console.log('AuthProvider context value:', { 
+    hasUser: !!user, 
+    hasSession: !!session, 
+    isAuthenticated: contextValue.isAuthenticated, 
+    loading 
+  });
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      login,
-      logout,
-      isAuthenticated: !!user, // Changed to check user instead of session for officials
-      loading
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

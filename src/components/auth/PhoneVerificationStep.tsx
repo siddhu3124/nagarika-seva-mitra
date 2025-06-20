@@ -109,10 +109,10 @@ const PhoneVerificationStep: React.FC<PhoneVerificationStepProps> = ({ onVerific
     const success = await verifyOTP(otp);
     if (success) {
       console.log('OTP verification successful, proceeding to profile completion');
-      // Add delay to ensure auth state is fully updated
+      // Small delay to ensure auth state is updated
       setTimeout(() => {
         onVerificationComplete();
-      }, 1000);
+      }, 500);
     }
     return success;
   }, [verifyOTP, onVerificationComplete, phoneNumber]);

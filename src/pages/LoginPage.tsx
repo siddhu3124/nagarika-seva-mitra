@@ -14,6 +14,8 @@ const LoginPage = () => {
 
   // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
+    console.log('LoginPage useEffect - Auth state:', { isAuthenticated, authLoading, user });
+    
     if (!authLoading && isAuthenticated && user) {
       console.log('User authenticated, redirecting...', user);
       if (user.role === 'citizen') {
