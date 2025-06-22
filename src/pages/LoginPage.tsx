@@ -5,11 +5,13 @@ import LanguageToggle from '@/components/LanguageToggle';
 import PhoneVerificationStep from '@/components/auth/PhoneVerificationStep';
 import ProfileCompletionStep from '@/components/auth/ProfileCompletionStep';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
   const [step, setStep] = useState<'phone' | 'profile'>('phone');
   const { isAuthenticated, loading: authLoading, user, session, error } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   // Redirect authenticated users to appropriate dashboard
@@ -51,11 +53,11 @@ const LoginPage = () => {
   const getStepTitle = () => {
     switch (step) {
       case 'phone':
-        return 'Phone Verification';
+        return t('phone_verification');
       case 'profile':
-        return 'Complete Profile';
+        return t('complete_profile');
       default:
-        return 'Phone Verification';
+        return t('phone_verification');
     }
   };
 
@@ -65,7 +67,7 @@ const LoginPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-light-blue-bg to-government-blue flex items-center justify-center p-4">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-          <p>Loading...</p>
+          <p>{t('loading')}</p>
           <p className="text-sm text-white/80 mt-2">Checking authentication status</p>
         </div>
       </div>
@@ -76,9 +78,9 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-light-blue-bg to-government-blue flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">నాగరిక మిత్ర</h1>
-          <h2 className="text-xl text-white/90">Nagarika Mitra</h2>
-          <p className="text-white/80 mt-2">Government Citizen Service Platform</p>
+          <h1 className="text-4xl font-bold text-white mb-2">{t('app_name')}</h1>
+          <h2 className="text-xl text-white/90 mb-2">{t('app_tagline')}</h2>
+          <p className="text-white/80">{t('app_subtitle')}</p>
         </div>
 
         {error && (

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import CitizenNavigation from '@/components/CitizenNavigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -16,11 +17,13 @@ interface Message {
   mandal: string;
   village: string;
   target_roles: string[];
+  urgency: string;
   sender_id: string;
 }
 
 const MessagesFromOfficials = () => {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,12 +96,32 @@ const MessagesFromOfficials = () => {
     });
   };
 
+  const getUrgencyBadge = (urgency: string) => {
+    const colors = {
+      low: 'default',
+      medium: 'secondary',
+      high: 'destructive',
+      urgent: 'destructive'
+    };
+    return colors[urgency as keyof typeof colors] || 'default';
+  };
+
+  const getUrgencyEmoji = (urgency: string) => {
+    const emojis = {
+      low: '📢',
+      medium: '📣',
+      high: '⚠️',
+      urgent: '🚨'
+    };
+    return emojis[urgency as keyof typeof emojis] || '📢';
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-light-blue-bg">
         <CitizenNavigation />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Loading messages...</div>
+          <div className="text-center">{t('loading')}</div>
         </div>
       </div>
     );
@@ -126,7 +149,7 @@ const MessagesFromOfficials = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-government-blue mb-2">
-            Messages from Officials 📨
+            {t('messages_from_officials')} 📨
           </h1>
           <p className="text-sm text-gray-600">
             📍 Showing messages for: {user.district} → {user.mandal} → {user.village}
@@ -139,12 +162,17 @@ const MessagesFromOfficials = () => {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center text-lg">
-                    <span className="mr-2">📢</span>
+                    <span className="mr-2">{getUrgencyEmoji(message.urgency)}</span>
                     {message.title}
                   </CardTitle>
-                  <Badge variant="default">
-                    Official
-                  </Badge>
+                  <div className="flex gap-2">
+                    <Badge variant={getUrgencyBadge(message.urgency)}>
+                      {message.urgency.charAt(0).toUpperCase() + message.urgency.slice(1)}
+                    </Badge>
+                    <Badge variant="default">
+                      Official
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

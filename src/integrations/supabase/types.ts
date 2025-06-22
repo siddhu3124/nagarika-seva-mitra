@@ -343,6 +343,7 @@ export type Database = {
           sender_id: string | null
           target_roles: string[]
           title: string
+          urgency: string | null
           village: string | null
         }
         Insert: {
@@ -354,6 +355,7 @@ export type Database = {
           sender_id?: string | null
           target_roles: string[]
           title: string
+          urgency?: string | null
           village?: string | null
         }
         Update: {
@@ -365,6 +367,7 @@ export type Database = {
           sender_id?: string | null
           target_roles?: string[]
           title?: string
+          urgency?: string | null
           village?: string | null
         }
         Relationships: [

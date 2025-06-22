@@ -1,367 +1,339 @@
-import React, { createContext, useContext, useState } from 'react';
 
-type Language = 'telugu' | 'english' | 'urdu';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
-  getOptions: (category: string) => Array<{value: string, label: string}>;
-}
+type Language = 'en' | 'te' | 'ur';
 
 interface Translations {
   [key: string]: {
-    telugu: string;
-    english: string;
-    urdu: string;
+    en: string;
+    te: string;
+    ur: string;
   };
 }
 
 const translations: Translations = {
-  'citizen_login': {
-    telugu: 'పౌరుడు లాగిన్',
-    english: 'Citizen Login',
-    urdu: 'شہری لاگ ان'
+  // App branding
+  app_name: {
+    en: 'Nagarika Mitra',
+    te: 'నాగరిక మిత్ర',
+    ur: 'ناگریک مترا'
   },
-  'official_login': {
-    telugu: 'అధికారి లాగిన్',
-    english: 'Official Login',
-    urdu: 'سرکاری لاگ ان'
+  app_tagline: {
+    en: 'Your Voice, Our Action',
+    te: 'మీ మాట, మా చర్య',
+    ur: 'آپ کی آواز، ہمارا عمل'
   },
-  'name': {
-    telugu: 'పేరు',
-    english: 'Name',
-    urdu: 'نام'
+  app_subtitle: {
+    en: 'Government Citizen Service Platform',
+    te: 'ప్రభుత్వ పౌర సేవా వేదిక',
+    ur: 'حکومتی شہری خدمات کا پلیٹ فارم'
   },
-  'age': {
-    telugu: 'వయస్సు',
-    english: 'Age',
-    urdu: 'عمر'
+  
+  // Common UI
+  loading: {
+    en: 'Loading...',
+    te: 'లోడ్ అవుతోంది...',
+    ur: 'لوڈ ہو رہا ہے...'
   },
-  'gender': {
-    telugu: 'లింగం',
-    english: 'Gender',
-    urdu: 'جنس'
+  submit: {
+    en: 'Submit',
+    te: 'సమర్పించు',
+    ur: 'جمع کریں'
   },
-  'phone_number': {
-    telugu: 'ఫోన్ నంబర్',
-    english: 'Phone Number',
-    urdu: 'فون نمبر'
+  cancel: {
+    en: 'Cancel',
+    te: 'రద్దు చేయి',
+    ur: 'منسوخ کریں'
   },
-  'locality': {
-    telugu: 'ప్రాంతం',
-    english: 'Locality',
-    urdu: 'علاقہ'
+  save: {
+    en: 'Save',
+    te: 'సేవ్ చేయి',
+    ur: 'محفوظ کریں'
   },
-  'department': {
-    telugu: 'విభాగం',
-    english: 'Department',
-    urdu: 'شعبہ'
+  
+  // Authentication
+  citizen_login: {
+    en: 'Citizen Login',
+    te: 'పౌర లాగిన్',
+    ur: 'شہری لاگ ان'
   },
-  'employee_id': {
-    telugu: 'ఉద్యోగి ID',
-    english: 'Employee ID',
-    urdu: 'ملازم آئی ڈی'
+  employee_login: {
+    en: 'Employee Login',
+    te: 'ఉద్యోగి లాగిన్',
+    ur: 'ملازم لاگ ان'
   },
-  'district': {
-    telugu: 'జిల్లా',
-    english: 'District',
-    urdu: 'ضلع'
+  phone_verification: {
+    en: 'Phone Verification',
+    te: 'ఫోన్ ధృవీకరణ',
+    ur: 'فون کی تصدیق'
   },
-  'mandal': {
-    telugu: 'మండలం',
-    english: 'Mandal',
-    urdu: 'منڈل'
+  complete_profile: {
+    en: 'Complete Profile',
+    te: 'ప్రొఫైల్ పూర్తి చేయండి',
+    ur: 'پروفائل مکمل کریں'
   },
-  'village': {
-    telugu: 'గ్రామం',
-    english: 'Village',
-    urdu: 'گاؤں'
+  
+  // Profile fields
+  name: {
+    en: 'Name',
+    te: 'పేరు',
+    ur: 'نام'
   },
-  'feedback_form': {
-    telugu: 'ఫీడ్‌బ్యాక్ ఫారం',
-    english: 'Feedback Form',
-    urdu: 'رائے فارم'
+  age: {
+    en: 'Age',
+    te: 'వయస్సు',
+    ur: 'عمر'
   },
-  'service_type': {
-    telugu: 'సేవా రకం',
-    english: 'Service Type',
-    urdu: 'سروس کی قسم'
+  gender: {
+    en: 'Gender',
+    te: 'లింగం',
+    ur: 'جنس'
   },
-  'rating': {
-    telugu: 'రేటింగ్',
-    english: 'Rating',
-    urdu: 'درجہ بندی'
+  phone_number: {
+    en: 'Phone Number',
+    te: 'ఫోన్ నంబర్',
+    ur: 'فون نمبر'
   },
-  'feedback_text': {
-    telugu: 'ఫీడ్‌బ్యాక్ టెక్స్ట్',
-    english: 'Feedback Text',
-    urdu: 'رائے کا متن'
+  employee_id: {
+    en: 'Employee ID',
+    te: 'ఉద్యోగి ID',
+    ur: 'ملازم کی شناخت'
   },
-  'submit': {
-    telugu: 'సమర్పించు',
-    english: 'Submit',
-    urdu: 'جمع کریں'
+  department: {
+    en: 'Department',
+    te: 'విభాగం',
+    ur: 'شعبہ'
   },
-  'login': {
-    telugu: 'లాగిన్',
-    english: 'Login',
-    urdu: 'لاگ ان'
+  
+  // Location fields
+  district: {
+    en: 'District',
+    te: 'జిల్లా',
+    ur: 'ضلع'
   },
-  'logout': {
-    telugu: 'లాగ్ అవుట్',
-    english: 'Logout',
-    urdu: 'لاگ آؤٹ'
+  mandal: {
+    en: 'Mandal',
+    te: 'మండలం',
+    ur: 'منڈل'
   },
-  'male': {
-    telugu: 'పురుషుడు',
-    english: 'Male',
-    urdu: 'مرد'
+  village: {
+    en: 'Village',
+    te: 'గ్రామం',
+    ur: 'گاؤں'
   },
-  'female': {
-    telugu: 'స్త్రీ',
-    english: 'Female',
-    urdu: 'عورت'
+  select_district_placeholder: {
+    en: 'Select District',
+    te: 'జిల్లా ఎంచుకోండి',
+    ur: 'ضلع منتخب کریں'
   },
-  'other': {
-    telugu: 'ఇతర',
-    english: 'Other',
-    urdu: 'دیگر'
+  select_mandal_placeholder: {
+    en: 'Select Mandal',
+    te: 'మండలం ఎంచుకోండి',
+    ur: 'منڈل منتخب کریں'
   },
-  'enter_name_placeholder': {
-    telugu: 'మీ పేరు నమోదు చేయండి',
-    english: 'Enter your name',
-    urdu: 'اپنا نام درج کریں'
+  select_village_placeholder: {
+    en: 'Select Village',
+    te: 'గ్రామం ఎంచుకోండి',
+    ur: 'گاؤں منتخب کریں'
   },
-  'enter_age_placeholder': {
-    telugu: 'వయస్సు',
-    english: 'Age',
-    urdu: 'عمر'
+  
+  // Feedback
+  feedback_form: {
+    en: 'Feedback Form',
+    te: 'ఫీడ్‌బ్యాక్ ఫారం',
+    ur: 'فیڈبیک فارم'
   },
-  'select_gender_placeholder': {
-    telugu: 'లింగం',
-    english: 'Gender',
-    urdu: 'جنس'
+  service_type: {
+    en: 'Service Type',
+    te: 'సేవా రకం',
+    ur: 'خدمت کی قسم'
   },
-  'enter_locality_placeholder': {
-    telugu: 'మీ ప్రాంతం',
-    english: 'Your locality',
-    urdu: 'اپنا علاقہ'
+  feedback_title: {
+    en: 'Title',
+    te: 'శీర్షిక',
+    ur: 'عنوان'
   },
-  'select_district_placeholder': {
-    telugu: 'జిల్లా',
-    english: 'District',
-    urdu: 'ضلع'
+  feedback_text: {
+    en: 'Feedback',
+    te: 'ఫీడ్‌బ్యాక్',
+    ur: 'فیڈبیک'
   },
-  'select_mandal_placeholder': {
-    telugu: 'మండలం',
-    english: 'Mandal',
-    urdu: 'منڈل'
+  rating: {
+    en: 'Rating',
+    te: 'రేటింగ్',
+    ur: 'درجہ بندی'
   },
-  'select_village_placeholder': {
-    telugu: 'గ్రామం',
-    english: 'Village',
-    urdu: 'گاؤں'
+  location_details: {
+    en: 'Location Details',
+    te: 'స్థాన వివరాలు',
+    ur: 'مقام کی تفصیلات'
   },
-  'enter_phone_placeholder': {
-    telugu: '+91 9876543210',
-    english: '+91 9876543210',
-    urdu: '+91 9876543210'
+  
+  // Messages
+  messages_from_officials: {
+    en: 'Messages from Officials',
+    te: 'అధికారుల సందేశాలు',
+    ur: 'حکام کے پیغامات'
   },
-  'official_name_placeholder': {
-    telugu: 'అధికారి పేరు',
-    english: 'Official name',
-    urdu: 'سرکاری نام'
+  send_message: {
+    en: 'Send Message',
+    te: 'సందేశం పంపండి',
+    ur: 'پیغام بھیجیں'
   },
-  'select_department_placeholder': {
-    telugu: 'విభాగం ఎంచుకోండి',
-    english: 'Select department',
-    urdu: 'شعبہ منتخب کریں'
+  message_title: {
+    en: 'Message Title',
+    te: 'సందేశ శీర్షిక',
+    ur: 'پیغام کا عنوان'
   },
-  'employee_id_placeholder': {
-    telugu: 'EMP001',
-    english: 'EMP001',
-    urdu: 'EMP001'
+  message_content: {
+    en: 'Message Content',
+    te: 'సందేశ కంటెంట్',
+    ur: 'پیغام کا مواد'
   },
-  'select_service_placeholder': {
-    telugu: 'సేవా రకం ఎంచుకోండి',
-    english: 'Select service type',
-    urdu: 'سروس کی قسم منتخب کریں'
+  urgency: {
+    en: 'Urgency',
+    te: 'అత్యవసరత',
+    ur: 'فوری ضرورت'
   },
-  'feedback_placeholder': {
-    telugu: 'మీ అభిప్రాయం వివరంగా రాయండి...',
-    english: 'Write your feedback in detail...',
-    urdu: 'اپنی رائے تفصیل سے لکھیں...'
+  
+  // Service types
+  healthcare: {
+    en: 'Healthcare',
+    te: 'ఆరోగ్య సంరక్షణ',
+    ur: 'صحت کی دیکھ بھال'
   },
-  'message_title_placeholder': {
-    telugu: 'సందేశ శీర్షిక నమోదు చేయండి...',
-    english: 'Enter message title...',
-    urdu: 'پیغام کا عنوان درج کریں...'
+  education: {
+    en: 'Education',
+    te: 'విద్య',
+    ur: 'تعلیم'
   },
-  'message_body_placeholder': {
-    telugu: 'మీ సందేశాన్ని ఇక్కడ టైప్ చేయండి...',
-    english: 'Type your message here...',
-    urdu: 'اپنا پیغام یہاں ٹائپ کریں...'
+  transportation: {
+    en: 'Transportation',
+    te: 'రవాణా',
+    ur: 'نقل و حمل'
+  },
+  water_supply: {
+    en: 'Water Supply',
+    te: 'నీటి సరఫరా',
+    ur: 'پانی کی فراہمی'
+  },
+  electricity: {
+    en: 'Electricity',
+    te: 'విద్యుత్',
+    ur: 'بجلی'
+  },
+  sanitation: {
+    en: 'Sanitation',
+    te: 'పరిశుభ్రత',
+    ur: 'صفائی'
+  },
+  public_safety: {
+    en: 'Public Safety',
+    te: 'ప్రజా భద్రత',
+    ur: 'عوامی تحفظ'
+  },
+  infrastructure: {
+    en: 'Infrastructure',
+    te: 'మౌలిక వసతులు',
+    ur: 'بنیادی ڈھانچہ'
+  },
+  government_services: {
+    en: 'Government Services',
+    te: 'ప్రభుత్వ సేవలు',
+    ur: 'حکومتی خدمات'
+  },
+  other: {
+    en: 'Other',
+    te: 'ఇతర',
+    ur: 'دیگر'
+  },
+  
+  // Placeholders
+  enter_name_placeholder: {
+    en: 'Enter your name',
+    te: 'మీ పేరు నమోదు చేయండి',
+    ur: 'اپنا نام درج کریں'
+  },
+  enter_employee_id_placeholder: {
+    en: 'Enter Employee ID',
+    te: 'ఉద్యోగి ID నమోదు చేయండి',
+    ur: 'ملازم کی شناخت درج کریں'
+  },
+  enter_phone_placeholder: {
+    en: 'Enter phone number',
+    te: 'ఫోన్ నంబర్ నమోదు చేయండి',
+    ur: 'فون نمبر درج کریں'
+  },
+  enter_feedback_title_placeholder: {
+    en: 'Enter feedback title',
+    te: 'ఫీడ్‌బ్యాక్ శీర్షిక నమోదు చేయండి',
+    ur: 'فیڈبیک کا عنوان درج کریں'
+  },
+  enter_feedback_placeholder: {
+    en: 'Share your experience and suggestions...',
+    te: 'మీ అనుభవం మరియు సూచనలను పంచుకోండి...',
+    ur: 'اپنا تجربہ اور تجاویز شیئر کریں...'
+  },
+  enter_location_details_placeholder: {
+    en: 'Provide specific location details...',
+    te: 'నిర్దిష్ట స్థాన వివరాలను అందించండి...',
+    ur: 'مخصوص مقام کی تفصیلات فراہم کریں...'
+  },
+  enter_message_title_placeholder: {
+    en: 'Enter message title',
+    te: 'సందేశ శీర్షిక నమోదు చేయండి',
+    ur: 'پیغام کا عنوان درج کریں'
+  },
+  enter_message_content_placeholder: {
+    en: 'Enter your message content here...',
+    te: 'మీ సందేశ కంటెంట్‌ను ఇక్కడ నమోదు చేయండి...',
+    ur: 'یہاں اپنے پیغام کا مواد درج کریں...'
   }
 };
 
-// Enhanced dropdown options with proper district-mandal-village mapping
-const dropdownOptions = {
-  gender: [
-    { value: 'male', labelKey: 'male' },
-    { value: 'female', labelKey: 'female' },
-    { value: 'other', labelKey: 'other' }
-  ],
-  departments: [
-    { 
-      value: 'health', 
-      labels: { telugu: 'ఆరోగ్య శాఖ', english: 'Health Department', urdu: 'صحت کا شعبہ' }
-    },
-    { 
-      value: 'roads', 
-      labels: { telugu: 'రోడ్స్ & బిల్డింగ్స్', english: 'Roads & Buildings', urdu: 'سڑکیں اور عمارات' }
-    },
-    { 
-      value: 'water', 
-      labels: { telugu: 'వాటర్ సప్లై', english: 'Water Supply', urdu: 'پانی کی فراہمی' }
-    },
-    { 
-      value: 'education', 
-      labels: { telugu: 'విద్యా శాఖ', english: 'Education Department', urdu: 'تعلیمی شعبہ' }
-    },
-    { 
-      value: 'agriculture', 
-      labels: { telugu: 'వ్యవసాయ శాఖ', english: 'Agriculture Department', urdu: 'زراعت کا شعبہ' }
-    }
-  ],
-  services: [
-    { 
-      value: 'water', 
-      labels: { telugu: 'నీటి సరఫరా', english: 'Water Supply', urdu: 'پانی کی فراہمی' }
-    },
-    { 
-      value: 'electricity', 
-      labels: { telugu: 'విద్యుత్', english: 'Electricity', urdu: 'بجلی' }
-    },
-    { 
-      value: 'roads', 
-      labels: { telugu: 'రోడ్లు', english: 'Roads', urdu: 'سڑکیں' }
-    },
-    { 
-      value: 'healthcare', 
-      labels: { telugu: 'ఆరోగ్య సేవలు', english: 'Healthcare', urdu: 'صحت کی دیکھ بھال' }
-    },
-    { 
-      value: 'sanitation', 
-      labels: { telugu: 'పరిశుభ్రత', english: 'Sanitation', urdu: 'صفائی' }
-    },
-    { 
-      value: 'education', 
-      labels: { telugu: 'విద్య', english: 'Education', urdu: 'تعلیم' }
-    }
-  ],
-  districts: [
-    { 
-      value: 'hyderabad', 
-      labels: { telugu: 'హైదరాబాద్', english: 'Hyderabad', urdu: 'حیدرآباد' }
-    },
-    { 
-      value: 'warangal', 
-      labels: { telugu: 'వరంగల్', english: 'Warangal', urdu: 'ورنگل' }
-    },
-    { 
-      value: 'nizamabad', 
-      labels: { telugu: 'నిజామాబాద్', english: 'Nizamabad', urdu: 'نظام آباد' }
-    }
-  ],
-  mandals: [
-    { 
-      value: 'secunderabad', 
-      labels: { telugu: 'సికింద్రాబాద్', english: 'Secunderabad', urdu: 'سکندرآباد' }
-    },
-    { 
-      value: 'kukatpally', 
-      labels: { telugu: 'కుకట్‌పల్లి', english: 'Kukatpally', urdu: 'کوکت پلی' }
-    },
-    { 
-      value: 'lbnagar', 
-      labels: { telugu: 'LB నగర్', english: 'LB Nagar', urdu: 'ایل بی نگر' }
-    },
-    { 
-      value: 'warangal_urban', 
-      labels: { telugu: 'వరంగల్ పట్టణ', english: 'Warangal Urban', urdu: 'ورنگل شہری' }
-    },
-    { 
-      value: 'warangal_rural', 
-      labels: { telugu: 'వరంగల్ గ్రామీణ', english: 'Warangal Rural', urdu: 'ورنگل دیہی' }
-    },
-    { 
-      value: 'nizamabad_urban', 
-      labels: { telugu: 'నిజామాబాద్ పట్టణ', english: 'Nizamabad Urban', urdu: 'نظام آباد شہری' }
-    },
-    { 
-      value: 'nizamabad_rural', 
-      labels: { telugu: 'నిజామాబాద్ గ్రామీణ', english: 'Nizamabad Rural', urdu: 'نظام آباد دیہی' }
-    }
-  ],
-  villages: [
-    { 
-      value: 'village1', 
-      labels: { telugu: 'గ్రామం 1', english: 'Village 1', urdu: 'گاؤں 1' }
-    },
-    { 
-      value: 'village2', 
-      labels: { telugu: 'గ్రామం 2', english: 'Village 2', urdu: 'گاؤں 2' }
-    },
-    { 
-      value: 'village3', 
-      labels: { telugu: 'గ్రామం 3', english: 'Village 3', urdu: 'گاؤں 3' }
-    }
-  ],
-  urgency: [
-    { 
-      value: 'low', 
-      labels: { telugu: 'తక్కువ', english: 'Low', urdu: 'کم' }
-    },
-    { 
-      value: 'medium', 
-      labels: { telugu: 'మధ్యమ', english: 'Medium', urdu: 'درمیانہ' }
-    },
-    { 
-      value: 'high', 
-      labels: { telugu: 'అధిక', english: 'High', urdu: 'زیادہ' }
-    }
-  ]
-};
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (language: Language) => void;
+  t: (key: string) => string;
+  getOptions: (type: 'districts' | 'mandals' | 'villages' | 'serviceTypes' | 'departments') => Array<{ value: string; label: string }>;
+}
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('telugu');
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [language, setLanguage] = useState<Language>('en');
 
   const t = (key: string): string => {
     return translations[key]?.[language] || key;
   };
 
-  const getOptions = (category: string): Array<{value: string, label: string}> => {
-    const options = dropdownOptions[category as keyof typeof dropdownOptions];
-    if (!options) return [];
+  const getOptions = (type: 'districts' | 'mandals' | 'villages' | 'serviceTypes' | 'departments') => {
+    const options = {
+      districts: [
+        'Adilabad', 'Bhadradri Kothagudem', 'Hyderabad', 'Jagtial', 'Jangaon', 
+        'Jayashankar Bhupalapally', 'Jogulamba Gadwal', 'Kamareddy', 'Karimnagar', 
+        'Khammam', 'Komaram Bheem Asifabad', 'Mahabubabad', 'Mahabubnagar', 
+        'Mancherial', 'Medak', 'Medchal-Malkajgiri', 'Mulugu', 'Nagarkurnool', 
+        'Nalgonda', 'Narayanpet', 'Nirmal', 'Nizamabad', 'Peddapalli', 
+        'Rajanna Sircilla', 'Rangareddy', 'Sangareddy', 'Siddipet', 'Suryapet', 
+        'Vikarabad', 'Wanaparthy', 'Warangal Rural', 'Warangal Urban', 'Yadadri Bhuvanagiri'
+      ],
+      mandals: [], // Will be populated based on district selection
+      villages: [], // Will be populated based on mandal selection
+      serviceTypes: [
+        'Healthcare', 'Education', 'Transportation', 'Water Supply', 'Electricity',
+        'Sanitation', 'Public Safety', 'Infrastructure', 'Government Services', 'Other'
+      ],
+      departments: [
+        'Revenue', 'Police', 'Health', 'Education', 'Agriculture', 'Roads & Buildings',
+        'Water Supply', 'Electricity', 'Rural Development', 'Urban Development'
+      ]
+    };
 
-    return options.map(option => {
-      if ('labelKey' in option) {
-        // For simple options with labelKey
-        return {
-          value: option.value,
-          label: t(option.labelKey)
-        };
-      } else {
-        // For complex options with direct labels
-        return {
-          value: option.value,
-          label: option.labels[language]
-        };
-      }
-    });
+    return options[type].map(option => ({
+      value: option,
+      label: option
+    }));
   };
 
   return (

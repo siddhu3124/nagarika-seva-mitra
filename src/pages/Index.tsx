@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading, error } = useAuth();
+  const { t } = useLanguage();
   const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
@@ -65,7 +67,7 @@ const Index = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-light-blue-bg to-government-blue">
       <div className="text-center text-white">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-        <p>Loading Nagarika Mitra...</p>
+        <p>{t('loading')} Nagarika Mitra...</p>
         <p className="text-sm text-white/80 mt-2">Please wait while we set things up</p>
       </div>
     </div>

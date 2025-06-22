@@ -14,7 +14,7 @@ const ProfileCompletionStep: React.FC = () => {
       <Tabs value={userType} onValueChange={(value) => setUserType(value as 'citizen' | 'official')}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="citizen">{t('citizen_login')}</TabsTrigger>
-          <TabsTrigger value="official">Employee Login</TabsTrigger>
+          <TabsTrigger value="official">{t('employee_login')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="citizen" className="space-y-4">
