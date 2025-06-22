@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'en' | 'te' | 'ur';
@@ -295,7 +294,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
   t: (key: string) => string;
-  getOptions: (type: 'districts' | 'mandals' | 'villages' | 'serviceTypes' | 'departments') => Array<{ value: string; label: string }>;
+  getOptions: (type: 'districts' | 'mandals' | 'villages' | 'serviceTypes' | 'departments' | 'gender') => Array<{ value: string; label: string }>;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -307,7 +306,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return translations[key]?.[language] || key;
   };
 
-  const getOptions = (type: 'districts' | 'mandals' | 'villages' | 'serviceTypes' | 'departments') => {
+  const getOptions = (type: 'districts' | 'mandals' | 'villages' | 'serviceTypes' | 'departments' | 'gender') => {
     const options = {
       districts: [
         'Adilabad', 'Bhadradri Kothagudem', 'Hyderabad', 'Jagtial', 'Jangaon', 
@@ -327,11 +326,14 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       departments: [
         'Revenue', 'Police', 'Health', 'Education', 'Agriculture', 'Roads & Buildings',
         'Water Supply', 'Electricity', 'Rural Development', 'Urban Development'
+      ],
+      gender: [
+        'Male', 'Female', 'Other'
       ]
     };
 
     return options[type].map(option => ({
-      value: option,
+      value: option.toLowerCase().replace(' ', '_'),
       label: option
     }));
   };

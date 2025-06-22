@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -96,14 +95,14 @@ const MessagesFromOfficials = () => {
     });
   };
 
-  const getUrgencyBadge = (urgency: string) => {
-    const colors = {
+  const getUrgencyBadge = (urgency: string): "default" | "secondary" | "destructive" | "outline" => {
+    const colors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       low: 'default',
       medium: 'secondary',
       high: 'destructive',
       urgent: 'destructive'
     };
-    return colors[urgency as keyof typeof colors] || 'default';
+    return colors[urgency] || 'default';
   };
 
   const getUrgencyEmoji = (urgency: string) => {

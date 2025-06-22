@@ -119,7 +119,7 @@ const AnalyticsDashboard = () => {
                   <SelectValue placeholder={t('service_type')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {getOptions('services').map((option) => (
+                  {getOptions('serviceTypes').map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
